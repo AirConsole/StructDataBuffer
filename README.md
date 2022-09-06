@@ -47,7 +47,7 @@ node build.js --input example.struct.json --output example.js
 ```
 This would generate all Classes needed for you:
 ```javascript
-import { Player } from 'gameobjects.js'
+import { Player } from 'example.js'
 
 // Create an ArrayBuffer containing Player data of 'Andrin' aged 39.
 const buffer = Player.pack('Andrin', 39);
