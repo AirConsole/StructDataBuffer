@@ -1,0 +1,38 @@
+{
+  "name": "MyGameObjects",
+  "doc": "Some structs for a game",
+  "structs": [
+    {
+      "name": "Player",
+      "doc": "A player inside a world",
+      "properties": [
+        {
+          "name": "Name",
+          "doc": "The name of the player",
+          "type": "string"
+        },
+        {
+          "name": "Age",
+          "doc": "The age of the player",
+          "type": "Uint8"
+        }
+      ]
+    },
+    {
+      "name": "House",
+      "doc": "A house in the world",
+      "properties": [
+        {
+          "name": "Owner",
+          "doc": "Who owns the house",
+          "type": "Player"
+        },
+        {
+          "name": "Address",
+          "doc": "A JSON representing the address",
+          "type": "JSON"
+        }
+      ]
+    }
+  ]
+}

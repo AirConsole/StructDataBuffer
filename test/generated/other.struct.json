@@ -1,0 +1,17 @@
+{
+  "name": "OtherGameObjects",
+  "doc": "Some structs for another game",
+  "structs": [
+    {
+      "name": "Mansion",
+      "doc": "A mansion in another world.",
+      "properties": [
+        {
+          "name": "Player",
+          "doc": "A player from another input file",
+          "type": "DataView"
+        }
+      ]
+    }
+  ]
+}

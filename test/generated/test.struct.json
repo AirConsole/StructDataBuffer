@@ -1,0 +1,126 @@
+{
+  "name": "TestStruct",
+  "doc": "A collection of structs generated for unit-tests",
+  "structs": [
+    {
+      "name": "Simple",
+      "doc": "A very small struct",
+      "properties": [
+        {
+          "name": "A",
+          "type": "Uint8"
+        }
+      ]
+    },
+    {
+      "name": "Parent",
+      "doc": "A struct that has children of other test struct types",
+      "properties": [
+        {
+          "name": "TypedChild",
+          "type": "Simple"
+        },
+        {
+          "name": "GenericChild",
+          "type": "TestStruct"
+        },
+        {
+          "name": "ForeignChild",
+          "type": "DataView"
+        }
+      ]
+    },
+    {
+      "name": "Mixed",
+      "doc": "A small struct with mixed pointers / values",
+      "properties": [
+        {
+          "name": "Int8Array",
+          "type": "Int8Array"
+        },
+        {
+          "name": "Uint8",
+          "type": "Uint8"
+        },
+        {
+          "name": "DataView",
+          "type": "DataView"
+        },
+        {
+          "name": "Int8",
+          "type": "Int8"
+        },
+        {
+          "name": "JSON",
+          "type": "JSON"
+        }
+      ]
+    },
+    {
+      "name": "PropertyTypes",
+      "doc": "All allowed builtin types",
+      "properties": [
+        {
+          "name": "Uint8",
+          "type": "Uint8"
+        },
+        {
+          "name": "Uint16",
+          "type": "Uint16"
+        },
+        {
+          "name": "Uint32",
+          "type": "Uint32"
+        },
+        {
+          "name": "BigUint64",
+          "type": "BigUint64"
+        },
+        {
+          "name": "Int8",
+          "type": "Int8"
+        },
+        {
+          "name": "Int16",
+          "type": "Int16"
+        },
+        {
+          "name": "Int32",
+          "type": "Int32"
+        },
+        {
+          "name": "BigInt64",
+          "type": "BigInt64"
+        },
+        {
+          "name": "Float32",
+          "type": "Float32"
+        },
+        {
+          "name": "Float64",
+          "type": "Float64"
+        },
+        {
+          "name": "String",
+          "type": "string"
+        },
+        {
+          "name": "JSON",
+          "type": "JSON"
+        },
+        {
+          "name": "DataView",
+          "type": "DataView"
+        },
+        {
+          "name": "Int8Array",
+          "type": "Int8Array"
+        },
+        {
+          "name": "Uint8Array",
+          "type": "Uint8Array"
+        }
+      ]
+    }
+  ]
+}
