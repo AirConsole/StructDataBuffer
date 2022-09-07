@@ -8,7 +8,7 @@ This module can serialize structured data into an ArrayBuffer and
 parse ArrayBuffers back into structured data.
 
 We mainly use this for sending structured data efficiently over WebSockets and WebRTC datachannels.
-
+Sending StructDataBuffers instead of JSON files is over 1.5x faster for serializing and parsing in our use case and also smaller in size. 
 ## Files to follow while you read this:
 * [example.struct.json](test/generated/example.struct.json): The definition of the StructDataBuffers
 * [example.js](test/generated/example.js): The generated javascript file from the definition

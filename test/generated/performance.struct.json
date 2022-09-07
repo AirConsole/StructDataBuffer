@@ -1,0 +1,28 @@
+{
+  "name": "PerformanceTest",
+  "doc": "Typical Real Life Object structures",
+  "structs": [
+    {
+      "name": "NormalStruct",
+      "properties": [
+        {
+          "name": "String",
+          "type": "string"
+        },
+        {
+          "name": "TestNumber",
+          "type": "Uint32"
+        },
+        {
+          "name": "OtherNumber",
+          "type": "Uint8"
+        },
+        {
+          "name": "ArrayData",
+          "type": "Uint8Array",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}
