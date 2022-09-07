@@ -3,16 +3,13 @@
 */
 
 /* eslint-disable max-classes-per-file */
-
-/**
- * A map between struct names and their type id.
- * Can for example be used for high performance code in switches.
- * @type {{number}}
- */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-bitwise */
+/* eslint-disable no-use-before-define */
 
 export class Test {
   /**
-   * Creates an Test instance to access the different properties.
+   * Creates a Test instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   Test.pack(..., includeType=false);
    */
@@ -31,7 +28,6 @@ export class Test {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
     return 0;
   }
@@ -86,6 +82,11 @@ export class Test {
   }
 }
 
+/**
+ * A map between struct names and their type id.
+ * Can for example be used for high performance code in switches.
+ * @type {{number}}
+ */
 export const TYPE_ID = {
   Test: 0,
 };

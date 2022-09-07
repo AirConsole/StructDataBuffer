@@ -82,6 +82,7 @@ function createTemplateData(input) {
     const entry = JSON.parse(JSON.stringify(struct));
     let offset = 0;
     let lastPointer = -1;
+    let optionalCount = 0;
     const propertyNames = [];
     if (entry.properties) {
       for (let p = 0; p < entry.properties.length; p += 1) {
@@ -97,8 +98,10 @@ function createTemplateData(input) {
         if (prop.doc) {
           prop.doc = ` ${prop.doc}`;
         }
-        if (propType.bytesPerElement !== undefined) {
-          prop.bytesPerElement = propType.bytesPerElement;
+        if (prop.optional) {
+          prop.optionalBitMask = 2 ** (optionalCount % 8);
+          prop.optionalByte = Math.floor(optionalCount / 8);
+          optionalCount += 1;
         }
         if (propType.pointer) {
           prop.pointer = lastPointer;
@@ -115,6 +118,8 @@ function createTemplateData(input) {
       }
     }
     entry.hasPointers = lastPointer !== -1;
+    entry.optionalOffset = offset;
+    offset += Math.ceil(optionalCount / 8);
     entry.propertiesSize = offset;
     entry.propertyNames = propertyNames;
 

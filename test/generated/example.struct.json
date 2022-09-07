@@ -13,8 +13,9 @@
         },
         {
           "name": "Age",
-          "doc": "The age of the player",
-          "type": "Uint8"
+          "doc": "The age of the player (optional)",
+          "type": "Uint8",
+          "optional": true
         }
       ]
     },

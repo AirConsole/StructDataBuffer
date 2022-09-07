@@ -4,12 +4,9 @@
 */
 
 /* eslint-disable max-classes-per-file */
-
-/**
- * A map between struct names and their type id.
- * Can for example be used for high performance code in switches.
- * @type {{number}}
- */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-bitwise */
+/* eslint-disable no-use-before-define */
 <%
 Object.entries(structs).forEach((structEntry) => {
   const [structName, struct] = structEntry;
@@ -19,7 +16,7 @@ Object.entries(structs).forEach((structEntry) => {
  */<% } %>
 export class <%= structName %> {
   /**
-   * Creates an <%= structName %> instance to access the different properties.
+   * Creates a <%= structName %> instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   <%= structName %>.pack(..., includeType=false);
    */
@@ -38,7 +35,6 @@ export class <%= structName %> {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
     return <%= struct.id %>;
   }
@@ -47,7 +43,7 @@ export class <%= structName %> {
    * Creates an ArrayBuffer including all the values<% for (let p = 0; p < struct.propertyNames.length; p += 1) {
   const prop = struct.properties[p];
   %>
-   * @param {<%= propertyTypes[prop.type].isArrayBuffer ? 'ArrayBuffer' : propertyTypes[prop.type].doc %>} prop<%= prop.name %><%= prop.doc %><% } %>
+   * @param {<%= propertyTypes[prop.type].isArrayBuffer ? 'ArrayBuffer' : propertyTypes[prop.type].doc %><%= prop.optional ? '|undefined':''%>} prop<%= prop.name %><%= prop.doc %><% } %>
    * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
    *   <%= name %>(), if false, it can only be parsed by calling new <%= structName %>();
    *   Default: false
@@ -61,17 +57,22 @@ export class <%= structName %> {
     let len = typeOffset + <%= struct.propertiesSize %>;
     let pointerOffset = <%= struct.propertiesSize %>;<% for (let p = 0; p < struct.propertyNames.length; p += 1) {
           const prop = struct.properties[p];
-          if (prop.pointer !== undefined) {%><% if (prop.type === 'string') {%>
-    const uint8Array<%= prop.name %> = new TextEncoder().encode(prop<%= prop.name %>);<% } else if (prop.type === 'JSON') { %>
-    const uint8Array<%= prop.name %> = new TextEncoder().encode(JSON.stringify(prop<%= prop.name %>));<% } else if (propertyTypes[prop.type].isArrayBuffer) { %>
-    const uint8Array<%= prop.name %> = new Uint8Array(prop<%= prop.name %>);<% } else if (prop.type !== 'Uint8Array') { %>
-    const uint8Array<%= prop.name %> = new Uint8Array(
-      prop<%= prop.name %>.buffer,
-      prop<%= prop.name %>.byteOffset,
-      prop<%= prop.name %>.byteLength,
-    );<% } else { %>
-    const uint8Array<%= prop.name %> = prop<%= prop.name %>;<% } %>
-    len += uint8Array<%= prop.name %>.length;<% } %><% } } %>
+          const indent = prop.optional ? '  ': '';
+          const c = prop.optional ? '': 'const ';
+          if (prop.pointer !== undefined) {%><% if (prop.optional) { %>
+    let uint8Array<%= prop.name %>;
+    if (prop<%=prop.name%> !== undefined) {<% } %><% if (prop.type === 'string') {%>
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new TextEncoder().encode(prop<%= prop.name %>);<% } else if (prop.type === 'JSON') { %>
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new TextEncoder().encode(JSON.stringify(prop<%= prop.name %>));<% } else if (propertyTypes[prop.type].isArrayBuffer) { %>
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new Uint8Array(prop<%= prop.name %>);<% } else if (prop.type !== 'Uint8Array') { %>
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new Uint8Array(
+<%=indent%>      prop<%= prop.name %>.buffer,
+<%=indent%>      prop<%= prop.name %>.byteOffset,
+<%=indent%>      prop<%= prop.name %>.byteLength,
+<%=indent%>    );<% } else { %>
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = prop<%= prop.name %>;<% } %>
+<%=indent%>    len += uint8Array<%= prop.name %>.length;<% if (prop.optional) {%>
+    }<% } %><% } %><% } } %>
     const buffer = new ArrayBuffer(len);<% if (struct.propertyNames.length) { %>
     const view = new DataView(buffer, typeOffset);<% } %><% if (struct.hasPointers) {%>
     const uint8Array = new Uint8Array(buffer);
@@ -81,33 +82,53 @@ export class <%= structName %> {
     if (includeType) {
       new DataView(buffer).setUint8(0, <%= struct.id %>);
     }<% } %><% for (let p = 0; p < struct.propertyNames.length; p += 1) {
-  const prop = struct.properties[p];%><% if (prop.pointer === undefined) { %>
-    view.set<%= prop.type %>(<%= prop.offset %>, prop<%= prop.name%>);<% } else {%>
-    uint8Array.set(uint8Array<%= prop.name %>, pointerOffset + typeOffset);
-    pointerOffset += uint8Array<%= prop.name %>.byteLength;
-    view.setUint32(<%= prop.offset %>, pointerOffset);<% } %><%
-} %>
+  const prop = struct.properties[p];
+  const indent = prop.optional ? '  ': '';%><% if (prop.optional) { %>
+    if (prop<%= prop.name%> !== undefined) {
+      view.setUint8(<%= prop.optionalByte + struct.optionalOffset %>, view.getUint8(<%= prop.optionalByte + struct.optionalOffset %>) | <%= prop.optionalBitMask %>);<%}%><% if (prop.pointer === undefined) { %>
+<%=indent%>    view.set<%= prop.type %>(<%= prop.offset %>, prop<%= prop.name%>);<% if (prop.optional) { %>
+    }<%}%><% } else {%>
+<%=indent%>    uint8Array.set(uint8Array<%= prop.name %>, pointerOffset + typeOffset);
+<%=indent%>    pointerOffset += uint8Array<%= prop.name %>.byteLength;<% if (prop.optional) { %>
+    }<%}%>
+    view.setUint32(<%= prop.offset %>, pointerOffset);<% } %><% } %>
     return buffer;
   }<% for (let p = 0; p < struct.propertyNames.length; p += 1) {
-        const prop = struct.properties[p];%>
+        const prop = struct.properties[p];
+        const indent = prop.optional ? '  ': '';%><% if (prop.optional) { %>
+
+  /**
+   * Checks if <%= prop.name %> is set
+   * @returns {boolean}
+   */
+  has<%=prop.name%>() {
+    return !!(this.view.getUint8(<%= prop.optionalByte + struct.optionalOffset %>) & <%= prop.optionalBitMask%>);
+  }<% } %>
 
   /**<% if (prop.doc) { %>
    * <%= prop.doc %><% } %>
-   * @returns {<%= propertyTypes[prop.type].doc %>}
+   * @returns {<%= propertyTypes[prop.type].doc %><%= prop.optional ? '|undefined':''%>}
    */
-  get<%=prop.name%>() {<% if (prop.pointer === undefined) {%>
-    return this.view.get<%= prop.type%>(<%= prop.offset %>);<% } else { %>
-    const offset = <%= prop.pointer === -1 ? struct.propertiesSize : 'this.view.getUint32(' + struct.properties[prop.pointer].offset + ')'%>;
-    const len = <%= 'this.view.getUint32(' + prop.offset + ')' %> - offset;<% if (prop.type === 'JSON' || prop.type === 'string') { %>
-    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);<% if (prop.type === 'string') { %>
-    return new TextDecoder().decode(dataBuffer);<% } else { %>
-    return JSON.parse(new TextDecoder().decode(dataBuffer));<% }} else if (propertyTypes[prop.type].isArrayBuffer) { %>
-    // eslint-disable-next-line no-use-before-define
-    return <%= prop.type === name ? name : 'new ' + prop.type %>(new DataView(this.view.buffer, offset + this.view.byteOffset, len));<% } else { %>
-    return new <%= prop.type %>(this.view.buffer, offset + this.view.byteOffset, len);<% }} %>
+  get<%=prop.name%>() {<% if (prop.optional) {%>
+    if (this.has<%=prop.name%>()) {<% } %><% if (prop.pointer === undefined) {%>
+<%=indent%>    return this.view.get<%= prop.type%>(<%= prop.offset %>);<% } else { %>
+<%=indent%>    const offset = <%= prop.pointer === -1 ? struct.propertiesSize : 'this.view.getUint32(' + struct.properties[prop.pointer].offset + ')'%>;
+<%=indent%>    const len = <%= 'this.view.getUint32(' + prop.offset + ')' %> - offset;<% if (prop.type === 'JSON' || prop.type === 'string') { %>
+<%=indent%>    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);<% if (prop.type === 'string') { %>
+<%=indent%>    return new TextDecoder().decode(dataBuffer);<% } else { %>
+<%=indent%>    return JSON.parse(new TextDecoder().decode(dataBuffer));<% }} else if (propertyTypes[prop.type].isArrayBuffer) { %>
+<%=indent%>    return <%= prop.type === name ? name : 'new ' + prop.type %>(new DataView(this.view.buffer, offset + this.view.byteOffset, len));<% } else { %>
+<%=indent%>    return new <%= prop.type %>(this.view.buffer, offset + this.view.byteOffset, len);<% }} %><% if (prop.optional) {%>
+    }
+    return undefined;<% } %>
   }<% } %>
 }
 <% }); %>
+/**
+ * A map between struct names and their type id.
+ * Can for example be used for high performance code in switches.
+ * @type {{number}}
+ */
 export const TYPE_ID = {<%
 Object.entries(structs).forEach((structEntry) => {
     const [structName, struct] = structEntry;

@@ -3,19 +3,16 @@
 */
 
 /* eslint-disable max-classes-per-file */
-
-/**
- * A map between struct names and their type id.
- * Can for example be used for high performance code in switches.
- * @type {{number}}
- */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-bitwise */
+/* eslint-disable no-use-before-define */
 
 /**
  * A player inside a world
  */
 export class Player {
   /**
-   * Creates an Player instance to access the different properties.
+   * Creates a Player instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   Player.pack(..., includeType=false);
    */
@@ -34,7 +31,6 @@ export class Player {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
     return 0;
   }
@@ -42,7 +38,7 @@ export class Player {
   /**
    * Creates an ArrayBuffer including all the values
    * @param {string} propName The name of the player
-   * @param {number} propAge The age of the player
+   * @param {number|undefined} propAge The age of the player (optional)
    * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
    *   MyGameObjects(), if false, it can only be parsed by calling new Player();
    *   Default: false
@@ -54,8 +50,8 @@ export class Player {
     includeType,
   ) {
     const typeOffset = includeType ? 1 : 0;
-    let len = typeOffset + 5;
-    let pointerOffset = 5;
+    let len = typeOffset + 6;
+    let pointerOffset = 6;
     const uint8ArrayName = new TextEncoder().encode(propName);
     len += uint8ArrayName.length;
     const buffer = new ArrayBuffer(len);
@@ -67,7 +63,10 @@ export class Player {
     uint8Array.set(uint8ArrayName, pointerOffset + typeOffset);
     pointerOffset += uint8ArrayName.byteLength;
     view.setUint32(0, pointerOffset);
-    view.setUint8(4, propAge);
+    if (propAge !== undefined) {
+      view.setUint8(5, view.getUint8(5) | 1);
+      view.setUint8(4, propAge);
+    }
     return buffer;
   }
 
@@ -76,18 +75,29 @@ export class Player {
    * @returns {string}
    */
   getName() {
-    const offset = 5;
+    const offset = 6;
     const len = this.view.getUint32(0) - offset;
     const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
     return new TextDecoder().decode(dataBuffer);
   }
 
   /**
-   *  The age of the player
-   * @returns {number}
+   * Checks if Age is set
+   * @returns {boolean}
+   */
+  hasAge() {
+    return !!(this.view.getUint8(5) & 1);
+  }
+
+  /**
+   *  The age of the player (optional)
+   * @returns {number|undefined}
    */
   getAge() {
-    return this.view.getUint8(4);
+    if (this.hasAge()) {
+      return this.view.getUint8(4);
+    }
+    return undefined;
   }
 }
 
@@ -96,7 +106,7 @@ export class Player {
  */
 export class House {
   /**
-   * Creates an House instance to access the different properties.
+   * Creates a House instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   House.pack(..., includeType=false);
    */
@@ -115,7 +125,6 @@ export class House {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
     return 1;
   }
@@ -163,7 +172,6 @@ export class House {
   getOwner() {
     const offset = 8;
     const len = this.view.getUint32(0) - offset;
-    // eslint-disable-next-line no-use-before-define
     return new Player(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
   }
 
@@ -179,6 +187,11 @@ export class House {
   }
 }
 
+/**
+ * A map between struct names and their type id.
+ * Can for example be used for high performance code in switches.
+ * @type {{number}}
+ */
 export const TYPE_ID = {
   Player: 0,
   House: 1,

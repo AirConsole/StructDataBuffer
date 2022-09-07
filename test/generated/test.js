@@ -3,19 +3,16 @@
 */
 
 /* eslint-disable max-classes-per-file */
-
-/**
- * A map between struct names and their type id.
- * Can for example be used for high performance code in switches.
- * @type {{number}}
- */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-bitwise */
+/* eslint-disable no-use-before-define */
 
 /**
  * A very small struct
  */
 export class Simple {
   /**
-   * Creates an Simple instance to access the different properties.
+   * Creates a Simple instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   Simple.pack(..., includeType=false);
    */
@@ -34,7 +31,6 @@ export class Simple {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
     return 0;
   }
@@ -71,11 +67,369 @@ export class Simple {
 }
 
 /**
+ * A struct with optional fields
+ */
+export class Optional {
+  /**
+   * Creates a Optional instance to access the different properties.
+   * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
+   *   Optional.pack(..., includeType=false);
+   */
+  constructor(data) {
+    if (!ArrayBuffer.isView(data)) {
+      this.view = new DataView(data);
+    } else if (data instanceof DataView) {
+      this.view = data;
+    } else {
+      this.view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    }
+  }
+
+  /**
+   * Returns the type id of this struct.
+   * Can be used for example in switch statements together with TYPES.
+   * @returns {number}
+   */
+  typeId() {
+    return 1;
+  }
+
+  /**
+   * Creates an ArrayBuffer including all the values
+   * @param {number|undefined} propOptionalUint8
+   * @param {number} propRequiredUint8
+   * @param {string|undefined} propOptionalString
+   * @param {number|undefined} propOptionalUint16
+   * @param {string} propRequiredString
+   * @param {DataView|undefined} propOptionalDataView
+   * @param {Object|Array|string|number|boolean|undefined} propOptionalJSON
+   * @param {Uint8Array|undefined} propOptionalUint8Array
+   * @param {Int8Array|undefined} propOptionalInt8Array
+   * @param {ArrayBuffer|undefined} propOptionalSimple
+   * @param {number|undefined} propOptionalFloat32
+   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   *   TestStruct(), if false, it can only be parsed by calling new Optional();
+   *   Default: false
+   * @returns {ArrayBuffer}
+   */
+  static pack(
+    propOptionalUint8,
+    propRequiredUint8,
+    propOptionalString,
+    propOptionalUint16,
+    propRequiredString,
+    propOptionalDataView,
+    propOptionalJSON,
+    propOptionalUint8Array,
+    propOptionalInt8Array,
+    propOptionalSimple,
+    propOptionalFloat32,
+    includeType,
+  ) {
+    const typeOffset = includeType ? 1 : 0;
+    let len = typeOffset + 38;
+    let pointerOffset = 38;
+    let uint8ArrayOptionalString;
+    if (propOptionalString !== undefined) {
+      uint8ArrayOptionalString = new TextEncoder().encode(propOptionalString);
+      len += uint8ArrayOptionalString.length;
+    }
+    const uint8ArrayRequiredString = new TextEncoder().encode(propRequiredString);
+    len += uint8ArrayRequiredString.length;
+    let uint8ArrayOptionalDataView;
+    if (propOptionalDataView !== undefined) {
+      uint8ArrayOptionalDataView = new Uint8Array(
+        propOptionalDataView.buffer,
+        propOptionalDataView.byteOffset,
+        propOptionalDataView.byteLength,
+      );
+      len += uint8ArrayOptionalDataView.length;
+    }
+    let uint8ArrayOptionalJSON;
+    if (propOptionalJSON !== undefined) {
+      uint8ArrayOptionalJSON = new TextEncoder().encode(JSON.stringify(propOptionalJSON));
+      len += uint8ArrayOptionalJSON.length;
+    }
+    let uint8ArrayOptionalUint8Array;
+    if (propOptionalUint8Array !== undefined) {
+      uint8ArrayOptionalUint8Array = propOptionalUint8Array;
+      len += uint8ArrayOptionalUint8Array.length;
+    }
+    let uint8ArrayOptionalInt8Array;
+    if (propOptionalInt8Array !== undefined) {
+      uint8ArrayOptionalInt8Array = new Uint8Array(
+        propOptionalInt8Array.buffer,
+        propOptionalInt8Array.byteOffset,
+        propOptionalInt8Array.byteLength,
+      );
+      len += uint8ArrayOptionalInt8Array.length;
+    }
+    let uint8ArrayOptionalSimple;
+    if (propOptionalSimple !== undefined) {
+      uint8ArrayOptionalSimple = new Uint8Array(propOptionalSimple);
+      len += uint8ArrayOptionalSimple.length;
+    }
+    const buffer = new ArrayBuffer(len);
+    const view = new DataView(buffer, typeOffset);
+    const uint8Array = new Uint8Array(buffer);
+    if (includeType) {
+      uint8Array[0] = 1;
+    }
+    if (propOptionalUint8 !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 1);
+      view.setUint8(0, propOptionalUint8);
+    }
+    view.setUint8(1, propRequiredUint8);
+    if (propOptionalString !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 2);
+      uint8Array.set(uint8ArrayOptionalString, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayOptionalString.byteLength;
+    }
+    view.setUint32(2, pointerOffset);
+    if (propOptionalUint16 !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 4);
+      view.setUint16(6, propOptionalUint16);
+    }
+    uint8Array.set(uint8ArrayRequiredString, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayRequiredString.byteLength;
+    view.setUint32(8, pointerOffset);
+    if (propOptionalDataView !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 8);
+      uint8Array.set(uint8ArrayOptionalDataView, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayOptionalDataView.byteLength;
+    }
+    view.setUint32(12, pointerOffset);
+    if (propOptionalJSON !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 16);
+      uint8Array.set(uint8ArrayOptionalJSON, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayOptionalJSON.byteLength;
+    }
+    view.setUint32(16, pointerOffset);
+    if (propOptionalUint8Array !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 32);
+      uint8Array.set(uint8ArrayOptionalUint8Array, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayOptionalUint8Array.byteLength;
+    }
+    view.setUint32(20, pointerOffset);
+    if (propOptionalInt8Array !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 64);
+      uint8Array.set(uint8ArrayOptionalInt8Array, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayOptionalInt8Array.byteLength;
+    }
+    view.setUint32(24, pointerOffset);
+    if (propOptionalSimple !== undefined) {
+      view.setUint8(36, view.getUint8(36) | 128);
+      uint8Array.set(uint8ArrayOptionalSimple, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayOptionalSimple.byteLength;
+    }
+    view.setUint32(28, pointerOffset);
+    if (propOptionalFloat32 !== undefined) {
+      view.setUint8(37, view.getUint8(37) | 1);
+      view.setFloat32(32, propOptionalFloat32);
+    }
+    return buffer;
+  }
+
+  /**
+   * Checks if OptionalUint8 is set
+   * @returns {boolean}
+   */
+  hasOptionalUint8() {
+    return !!(this.view.getUint8(36) & 1);
+  }
+
+  /**
+   * @returns {number|undefined}
+   */
+  getOptionalUint8() {
+    if (this.hasOptionalUint8()) {
+      return this.view.getUint8(0);
+    }
+    return undefined;
+  }
+
+  /**
+   * @returns {number}
+   */
+  getRequiredUint8() {
+    return this.view.getUint8(1);
+  }
+
+  /**
+   * Checks if OptionalString is set
+   * @returns {boolean}
+   */
+  hasOptionalString() {
+    return !!(this.view.getUint8(36) & 2);
+  }
+
+  /**
+   * @returns {string|undefined}
+   */
+  getOptionalString() {
+    if (this.hasOptionalString()) {
+      const offset = 38;
+      const len = this.view.getUint32(2) - offset;
+      const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+      return new TextDecoder().decode(dataBuffer);
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if OptionalUint16 is set
+   * @returns {boolean}
+   */
+  hasOptionalUint16() {
+    return !!(this.view.getUint8(36) & 4);
+  }
+
+  /**
+   * @returns {number|undefined}
+   */
+  getOptionalUint16() {
+    if (this.hasOptionalUint16()) {
+      return this.view.getUint16(6);
+    }
+    return undefined;
+  }
+
+  /**
+   * @returns {string}
+   */
+  getRequiredString() {
+    const offset = this.view.getUint32(2);
+    const len = this.view.getUint32(8) - offset;
+    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+    return new TextDecoder().decode(dataBuffer);
+  }
+
+  /**
+   * Checks if OptionalDataView is set
+   * @returns {boolean}
+   */
+  hasOptionalDataView() {
+    return !!(this.view.getUint8(36) & 8);
+  }
+
+  /**
+   * @returns {DataView|undefined}
+   */
+  getOptionalDataView() {
+    if (this.hasOptionalDataView()) {
+      const offset = this.view.getUint32(8);
+      const len = this.view.getUint32(12) - offset;
+      return new DataView(this.view.buffer, offset + this.view.byteOffset, len);
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if OptionalJSON is set
+   * @returns {boolean}
+   */
+  hasOptionalJSON() {
+    return !!(this.view.getUint8(36) & 16);
+  }
+
+  /**
+   * @returns {Object|Array|string|number|boolean|undefined}
+   */
+  getOptionalJSON() {
+    if (this.hasOptionalJSON()) {
+      const offset = this.view.getUint32(12);
+      const len = this.view.getUint32(16) - offset;
+      const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+      return JSON.parse(new TextDecoder().decode(dataBuffer));
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if OptionalUint8Array is set
+   * @returns {boolean}
+   */
+  hasOptionalUint8Array() {
+    return !!(this.view.getUint8(36) & 32);
+  }
+
+  /**
+   * @returns {Uint8Array|undefined}
+   */
+  getOptionalUint8Array() {
+    if (this.hasOptionalUint8Array()) {
+      const offset = this.view.getUint32(16);
+      const len = this.view.getUint32(20) - offset;
+      return new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if OptionalInt8Array is set
+   * @returns {boolean}
+   */
+  hasOptionalInt8Array() {
+    return !!(this.view.getUint8(36) & 64);
+  }
+
+  /**
+   * @returns {Int8Array|undefined}
+   */
+  getOptionalInt8Array() {
+    if (this.hasOptionalInt8Array()) {
+      const offset = this.view.getUint32(20);
+      const len = this.view.getUint32(24) - offset;
+      return new Int8Array(this.view.buffer, offset + this.view.byteOffset, len);
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if OptionalSimple is set
+   * @returns {boolean}
+   */
+  hasOptionalSimple() {
+    return !!(this.view.getUint8(36) & 128);
+  }
+
+  /**
+   * @returns {Simple|undefined}
+   */
+  getOptionalSimple() {
+    if (this.hasOptionalSimple()) {
+      const offset = this.view.getUint32(24);
+      const len = this.view.getUint32(28) - offset;
+      return new Simple(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if OptionalFloat32 is set
+   * @returns {boolean}
+   */
+  hasOptionalFloat32() {
+    return !!(this.view.getUint8(37) & 1);
+  }
+
+  /**
+   * @returns {number|undefined}
+   */
+  getOptionalFloat32() {
+    if (this.hasOptionalFloat32()) {
+      return this.view.getFloat32(32);
+    }
+    return undefined;
+  }
+}
+
+/**
  * A struct that has children of other test struct types
  */
 export class Parent {
   /**
-   * Creates an Parent instance to access the different properties.
+   * Creates a Parent instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   Parent.pack(..., includeType=false);
    */
@@ -94,9 +448,8 @@ export class Parent {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
-    return 1;
+    return 2;
   }
 
   /**
@@ -132,7 +485,7 @@ export class Parent {
     const view = new DataView(buffer, typeOffset);
     const uint8Array = new Uint8Array(buffer);
     if (includeType) {
-      uint8Array[0] = 1;
+      uint8Array[0] = 2;
     }
     uint8Array.set(uint8ArrayTypedChild, pointerOffset + typeOffset);
     pointerOffset += uint8ArrayTypedChild.byteLength;
@@ -152,17 +505,15 @@ export class Parent {
   getTypedChild() {
     const offset = 12;
     const len = this.view.getUint32(0) - offset;
-    // eslint-disable-next-line no-use-before-define
     return new Simple(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
   }
 
   /**
-   * @returns {Simple|Parent|Mixed|PropertyTypes}
+   * @returns {Simple|Optional|Parent|Mixed|PropertyTypes}
    */
   getGenericChild() {
     const offset = this.view.getUint32(0);
     const len = this.view.getUint32(4) - offset;
-    // eslint-disable-next-line no-use-before-define
     return TestStruct(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
   }
 
@@ -181,7 +532,7 @@ export class Parent {
  */
 export class Mixed {
   /**
-   * Creates an Mixed instance to access the different properties.
+   * Creates a Mixed instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   Mixed.pack(..., includeType=false);
    */
@@ -200,9 +551,8 @@ export class Mixed {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
-    return 2;
+    return 3;
   }
 
   /**
@@ -246,7 +596,7 @@ export class Mixed {
     const view = new DataView(buffer, typeOffset);
     const uint8Array = new Uint8Array(buffer);
     if (includeType) {
-      uint8Array[0] = 2;
+      uint8Array[0] = 3;
     }
     uint8Array.set(uint8ArrayInt8Array, pointerOffset + typeOffset);
     pointerOffset += uint8ArrayInt8Array.byteLength;
@@ -310,7 +660,7 @@ export class Mixed {
  */
 export class PropertyTypes {
   /**
-   * Creates an PropertyTypes instance to access the different properties.
+   * Creates a PropertyTypes instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   PropertyTypes.pack(..., includeType=false);
    */
@@ -329,9 +679,8 @@ export class PropertyTypes {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
-    return 3;
+    return 4;
   }
 
   /**
@@ -399,7 +748,7 @@ export class PropertyTypes {
     const view = new DataView(buffer, typeOffset);
     const uint8Array = new Uint8Array(buffer);
     if (includeType) {
-      uint8Array[0] = 3;
+      uint8Array[0] = 4;
     }
     view.setUint8(0, propUint8);
     view.setUint16(1, propUint16);
@@ -547,17 +896,23 @@ export class PropertyTypes {
   }
 }
 
+/**
+ * A map between struct names and their type id.
+ * Can for example be used for high performance code in switches.
+ * @type {{number}}
+ */
 export const TYPE_ID = {
   Simple: 0,
-  Parent: 1,
-  Mixed: 2,
-  PropertyTypes: 3,
+  Optional: 1,
+  Parent: 2,
+  Mixed: 3,
+  PropertyTypes: 4,
 };
 
 /**
  * Converts an ArrayBuffer into one of the TestStruct structs.
  * @param {ArrayBuffer|DataView|TypedArray} data
- * @returns {Simple|Parent|Mixed|PropertyTypes}
+ * @returns {Simple|Optional|Parent|Mixed|PropertyTypes}
  */
 export function TestStruct(data) {
   let view;
@@ -572,6 +927,8 @@ export function TestStruct(data) {
   switch (view.getUint8(0)) {
     case TYPE_ID.Simple:
       return new Simple(dataView);
+    case TYPE_ID.Optional:
+      return new Optional(dataView);
     case TYPE_ID.Parent:
       return new Parent(dataView);
     case TYPE_ID.Mixed:

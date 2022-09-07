@@ -9,13 +9,14 @@ describe('Implement README example', () => {
     const buffer = Player.pack('Andrin', 39);
     // Parse the above ArrayBuffer
     const player = new Player(buffer);
-    // Assert 'Andrin 39'
+    // Assert 'Andrin true 39'
     assert.equal(player.getName(), 'Andrin');
+    assert.equal(player.hasAge(), true);
     assert.equal(player.getAge(), '39');
   });
 
   it('should have correct Custom Types example', () => {
-    const playerBuffer = Player.pack('Andrin', 39);
+    const playerBuffer = Player.pack('Andrin');
     const address = { Street: 'Mainstreet', Number: 1 };
     const houseBuffer = House.pack(playerBuffer, address);
     // Parse the buffer

@@ -13,6 +13,65 @@
       ]
     },
     {
+      "name": "Optional",
+      "doc": "A struct with optional fields",
+      "properties": [
+        {
+          "name": "OptionalUint8",
+          "type": "Uint8",
+          "optional": true
+        },
+        {
+          "name": "RequiredUint8",
+          "type": "Uint8"
+        },
+        {
+          "name": "OptionalString",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "OptionalUint16",
+          "type": "Uint16",
+          "optional": true
+        },
+        {
+          "name": "RequiredString",
+          "type": "string"
+        },
+        {
+          "name": "OptionalDataView",
+          "type": "DataView",
+          "optional": true
+        },
+        {
+          "name": "OptionalJSON",
+          "type": "JSON",
+          "optional": true
+        },
+        {
+          "name": "OptionalUint8Array",
+          "type": "Uint8Array",
+          "optional": true
+        },
+        {
+          "name": "OptionalInt8Array",
+          "type": "Int8Array",
+          "optional": true
+        },
+        {
+          "name": "OptionalSimple",
+          "type": "Simple",
+          "optional": true
+        },
+        {
+          "name": "OptionalFloat32",
+          "type": "Float32",
+          "optional": true
+        }
+      ]
+    },
+    {
       "name": "Parent",
       "doc": "A struct that has children of other test struct types",
       "properties": [

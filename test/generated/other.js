@@ -3,19 +3,16 @@
 */
 
 /* eslint-disable max-classes-per-file */
-
-/**
- * A map between struct names and their type id.
- * Can for example be used for high performance code in switches.
- * @type {{number}}
- */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-bitwise */
+/* eslint-disable no-use-before-define */
 
 /**
  * A mansion in another world.
  */
 export class Mansion {
   /**
-   * Creates an Mansion instance to access the different properties.
+   * Creates a Mansion instance to access the different properties.
    * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
    *   Mansion.pack(..., includeType=false);
    */
@@ -34,7 +31,6 @@ export class Mansion {
    * Can be used for example in switch statements together with TYPES.
    * @returns {number}
    */
-  // eslint-disable-next-line class-methods-use-this
   typeId() {
     return 0;
   }
@@ -83,6 +79,11 @@ export class Mansion {
   }
 }
 
+/**
+ * A map between struct names and their type id.
+ * Can for example be used for high performance code in switches.
+ * @type {{number}}
+ */
 export const TYPE_ID = {
   Mansion: 0,
 };

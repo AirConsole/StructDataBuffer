@@ -6,7 +6,7 @@ import {
   Parent,
   PropertyTypes,
   Simple,
-  TYPE_ID,
+  TYPE_ID, Optional,
 } from './generated/test.js';
 
 describe('Test functionality of generated files', () => {
@@ -117,6 +117,46 @@ describe('Test functionality of generated files', () => {
       assert.equal(numbers.getDataView().getUint8(1), 2);
       assert.equal(flatArr(numbers.getInt8Array()), flatArr([-128, 127]));
       assert.equal(flatArr(numbers.getUint8Array()), flatArr([0, 255]));
+    });
+  });
+  describe('Optional properties', () => {
+    it('should handle optional properties correct', () => {
+      const optionalArr = Optional.pack(
+        undefined,
+        1,
+        'hi',
+        2,
+        'hello',
+        undefined,
+        { a: 3 },
+        undefined,
+        new Int8Array([4, 5]),
+        undefined,
+        0.5,
+      );
+      const optional = new Optional(optionalArr);
+      assert.equal(optional.hasOptionalUint8(), false);
+      assert.equal(optional.getOptionalUint8(), undefined);
+      assert.equal(optional.getRequiredUint8(), 1);
+      assert.equal(optional.hasOptionalString(), true);
+      assert.equal(optional.getOptionalString(), 'hi');
+      assert.equal(optional.hasOptionalUint16(), true);
+      assert.equal(optional.getOptionalUint16(), 2);
+      assert.equal(optional.getRequiredString(), 'hello');
+      assert.equal(optional.hasOptionalDataView(), false);
+      assert.equal(optional.getOptionalDataView(), undefined);
+      assert.equal(optional.hasOptionalJSON(), true);
+      assert.equal(JSON.stringify(optional.getOptionalJSON()), JSON.stringify({ a: 3 }));
+      assert.equal(optional.hasOptionalUint8Array(), false);
+      assert.equal(optional.getOptionalUint8Array(), undefined);
+      assert.equal(optional.hasOptionalInt8Array(), true);
+      assert.equal(optional.getOptionalInt8Array().length, 2);
+      assert.equal(optional.getOptionalInt8Array()[0], 4);
+      assert.equal(optional.getOptionalInt8Array()[1], 5);
+      assert.equal(optional.hasOptionalSimple(), false);
+      assert.equal(optional.getOptionalSimple(), undefined);
+      assert.equal(optional.hasOptionalFloat32(), true);
+      assert.equal(optional.getOptionalFloat32(), 0.5);
     });
   });
 });

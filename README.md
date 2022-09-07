@@ -7,6 +7,8 @@ This JSON file is then compiled into a Javascript ES6 module.
 This module can serialize structured data into an ArrayBuffer and
 parse ArrayBuffers back into structured data.
 
+We mainly use this for sending structured data efficiently over WebSockets and WebRTC datachannels.
+
 ## Files to follow while you read this:
 * [example.struct.json](test/generated/example.struct.json): The definition of the StructDataBuffers
 * [example.js](test/generated/example.js): The generated javascript file from the definition
@@ -45,7 +47,18 @@ You then would compile this file to javascript by calling:
 ```shell
 node build.js --input example.struct.json --output example.js
 ```
-This would generate all Classes needed for you:
+This would generate all Classes needed for you, here is a simplified overview:
+
+```javascript
+class Player {
+  static pack(name, age)    // Creates an array buffer that includes name & age
+  consturctor(arrayBuffer)  // Parses an array buffer created with pack()
+  getName()                 // returns the Name
+  hasAge()                  // Checks if Age was set
+  getAge()                  // Gets the Age
+}
+```
+And here is how you would use them:
 ```javascript
 import { Player } from 'example.js'
 
@@ -55,8 +68,8 @@ const buffer = Player.pack('Andrin', 39);
 // Parse the above ArrayBuffer
 const player = new Player(buffer);
 
-// will print 'Andrin 39'
-console.log(player.getName(), player.getAge());
+// will print 'Andrin true 39'
+console.log(player.getName(), player.hasAge(), player.getAge());
 ```
 
 ## Property Types:
@@ -98,7 +111,7 @@ Here is an example where we add a `House` to our [`example.struct.json`](test/ge
 ```
 Now you can create a House that is owned by a Player:
 ```javascript
-const playerBuffer = Player.pack('Andrin', 39);
+const playerBuffer = Player.pack('Andrin');
 const address = { Street: 'Mainstreet', Number: 1 };
 const houseBuffer = House.pack(playerBuffer, address);
 
@@ -160,5 +173,34 @@ const player = new Player(dataView);
 // will print 'Andrin 39'
 console.log(player.getName(), player.getAge());
 ```
+
+## JSON Definition
+The StructDataBuffers are defined in a JSON format:
+```json
+{
+  "name": "The name of the StructDataBuffer collection (Alphanumeric String)",
+  "doc": "An optional doc string to use for JSDoc (String)",
+  "structs": [
+    {
+      "name": "The name a StructDataBuffer (Alphanumeric String)",
+      "doc": "An optional doc string to use for JSDoc (String)",
+      "properties": [
+        {
+          "name": "The name of a property in the StructDataBuffer (Alphanumeric String)",
+          "doc": "An optional doc string to use for JSDoc (String)",
+          "type": "The type of the property (e.g. Uint8, see Property Types)",
+          "optional": "If this property is optional (Boolean)"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Javascript documentation
+
+The generated javascript is fully documented.
+See an example here: [example.js](test/generated/example.js)
+
 ---
 Made in Zurich, Switzerland with :heart:
