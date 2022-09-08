@@ -8,6 +8,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-bitwise */
 /* eslint-disable no-use-before-define */
+/* eslint-disable max-len */
 
 /**
  * A mansion in another world.
