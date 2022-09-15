@@ -19,13 +19,14 @@ const PROPERTY_TYPES = {
   DataView: { doc: 'DataView', pointer: true },
   Int8Array: { doc: 'Int8Array', pointer: true },
   Uint8Array: { doc: 'Uint8Array', pointer: true },
-  // Arrays with element size greater than a single byte (e.g. Uint32Array)
-  // are NOT supported. We recommend to use DataView for these arrays instead.
-  // The reason is that we can not initialize those arrays from an unaligned
-  // ArrayBuffer. (e.g. a Uint32Array needs to begin at a multiple of 4);
-  // It could be solved by adding padding to all these arrays and an 8 byte
-  // padding to DataView (so you can encapsulate other foreign
-  // struct types), but we prefer to have compact ArrayBuffers.
+  Int16Array: { doc: 'Int16Array', pointer: true, align: 2 },
+  Uint16Array: { doc: 'Uint16Array', pointer: true, align: 2 },
+  Int32Array: { doc: 'Int32Array', pointer: true, align: 4 },
+  Uint32Array: { doc: 'Uint32Array', pointer: true, align: 4 },
+  BigInt64Array: { doc: 'BigInt64Array', pointer: true, align: 8 },
+  BigUint64Array: { doc: 'BigUint64Array', pointer: true, align: 8 },
+  Float32Array: { doc: 'Float32Array', pointer: true, align: 4 },
+  Float64Array: { doc: 'Float64Array', pointer: true, align: 8 },
 };
 
 function isAlphaNum(str) {
@@ -109,6 +110,21 @@ function createTemplateData(input) {
           prop.size = 4;
         } else {
           prop.size = propType.size;
+        }
+        if (prop.align && !propType.pointer) {
+          execError(`${prop.type} can not have alignment in ${struct.name}.${prop.name}`);
+        }
+        prop.typeAlign = propType.align;
+        prop.lenAlign = propType.align;
+        if (prop.align && !prop.typeAlign) {
+          if (prop.align !== true) {
+            prop.typeAlign = prop.align;
+          } else {
+            execError(`No default alignment found for ${prop.type} in ${struct.name}.${prop.name}`);
+          }
+        }
+        if (prop.align) {
+          prop.padAlign = prop.typeAlign;
         }
         offset += prop.size;
         if (propertyNames.indexOf(prop.name) !== -1) {

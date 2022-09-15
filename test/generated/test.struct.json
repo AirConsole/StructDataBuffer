@@ -116,6 +116,42 @@
       ]
     },
     {
+      "name": "Align",
+      "doc": "Testing byte alignment",
+      "properties": [
+        {
+          "name": "Gap1",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "Aligned",
+          "type": "Uint32Array",
+          "align": true
+        },
+        {
+          "name": "Gap2",
+          "type": "string"
+        },
+        {
+          "name": "Unaligned",
+          "type": "Uint32Array"
+        },
+        {
+          "name": "Child",
+          "type": "Align",
+          "align": 4,
+          "optional": true
+        },
+        {
+          "name": "DataView",
+          "type": "DataView",
+          "align": 4,
+          "optional": true
+        }
+      ]
+    },
+    {
       "name": "PropertyTypes",
       "doc": "All allowed builtin types",
       "properties": [
@@ -178,6 +214,38 @@
         {
           "name": "Uint8Array",
           "type": "Uint8Array"
+        },
+        {
+          "name": "Int16Array",
+          "type": "Int16Array"
+        },
+        {
+          "name": "Uint16Array",
+          "type": "Uint16Array"
+        },
+        {
+          "name": "Int32Array",
+          "type": "Int32Array"
+        },
+        {
+          "name": "Uint32Array",
+          "type": "Uint32Array"
+        },
+        {
+          "name": "BigInt64Array",
+          "type": "BigInt64Array"
+        },
+        {
+          "name": "BigUint64Array",
+          "type": "BigUint64Array"
+        },
+        {
+          "name": "Float32Array",
+          "type": "Float32Array"
+        },
+        {
+          "name": "Float64Array",
+          "type": "Float64Array"
         }
       ]
     }

@@ -74,9 +74,7 @@ console.log(player.getName(), player.hasAge(), player.getAge());
 
 ## Property Types:
 ### Standard types
-`Uint8`, `Uint16`, `Uint32`, `BigUint64`, `Int8`, `Int16`, `Int32`, `BigInt64`, `Float32`, `Float64`, `string`, `JSON`, `DataView`, `Int8Array`, `Uint8Array`
-
-Note: Arrays with elements that have size greater than 1 byte are not supported. Use DataViews instead.
+`Uint8`, `Uint16`, `Uint32`, `BigUint64`, `Int8`, `Int16`, `Int32`, `BigInt64`, `Float32`, `Float64`, `string`, `JSON`, `DataView`, `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`, `BigInt64Array`, `BigUint64Array`, `Float32Array`, `Float64Array`
 
 ### Custom Types
 Any type defined in the same input file can be referenced.
@@ -173,6 +171,57 @@ const player = new Player(dataView);
 // will print 'Andrin 39'
 console.log(player.getName(), player.getAge());
 ```
+## Byte Aligning Arrays for better performance
+Arrays with elements that have size greater than 1 byte allow the option `align` in the JSON config:
+
+```json     
+        {
+          "name": "Numbers",
+          "type": "Int32Array",
+          "align": true
+        }
+```
+If you align an array for a property, the ArrayBuffer holding the data does is not being copied when the property is being accessed.
+
+By default, the `align` value is `false`. This allows for generating smaller ArrayBuffers as there are no padding bytes, but accessing slower.
+
+### Array alignment in custom types
+If you use the `align` option inside a custom type, you should also set `align` on the custom type property of the parent.
+
+Instead of setting the parent property `align` to `true`, you need to set it to a `number` that is equal to the biggest alignment needed.
+* For 16bit Array properties need an alignment of `2`
+* For 32bit Array properties need an alignment of `4`
+* For 64bit Array properties need an alignment of `8`
+
+Here is a complete example
+```json
+{
+  "name": "AlignExample",
+  "structs": [
+    {
+      "name": "Parent",
+      "properties": [
+        {
+          "name": "Child",
+          "type": "Person",
+          "align": 4
+        }
+      ]
+    },
+    {
+      "name": "Person",
+      "properties": [
+        {
+          "name": "Numbers",
+          "type": "Int32Array",
+          "align": true
+        }
+      ]
+    }
+  ]
+}
+```
+Because Person has a `Int32Array` that is aligned, the parent property should set `align` to `4` to get the most performance. 
 
 ## JSON Definition
 The StructDataBuffers are defined in a JSON format:
@@ -189,7 +238,8 @@ The StructDataBuffers are defined in a JSON format:
           "name": "The name of a property in the StructDataBuffer (Alphanumeric String)",
           "doc": "An optional doc string to use for JSDoc (String)",
           "type": "The type of the property (e.g. Uint8, see Property Types)",
-          "optional": "If this property is optional (Boolean)"
+          "optional": "If this property is optional (Boolean)",
+          "align": "Boolean/Number for performance improvements in Array and custom types. Default: false"
         }
       ]
     }

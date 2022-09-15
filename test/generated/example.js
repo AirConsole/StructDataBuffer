@@ -175,7 +175,8 @@ export class House {
   getOwner() {
     const offset = 8;
     const len = this.view.getUint32(0) - offset;
-    return new Player(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
+    const start = offset + this.view.byteOffset;
+    return new Player(new DataView(this.view.buffer, start, len));
   }
 
   /**

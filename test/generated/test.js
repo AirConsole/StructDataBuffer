@@ -403,7 +403,8 @@ export class Optional {
     if (this.hasOptionalSimple()) {
       const offset = this.view.getUint32(24);
       const len = this.view.getUint32(28) - offset;
-      return new Simple(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
+      const start = offset + this.view.byteOffset;
+      return new Simple(new DataView(this.view.buffer, start, len));
     }
     return undefined;
   }
@@ -508,16 +509,18 @@ export class Parent {
   getTypedChild() {
     const offset = 12;
     const len = this.view.getUint32(0) - offset;
-    return new Simple(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
+    const start = offset + this.view.byteOffset;
+    return new Simple(new DataView(this.view.buffer, start, len));
   }
 
   /**
-   * @returns {Simple|Optional|Parent|Mixed|PropertyTypes}
+   * @returns {Simple|Optional|Parent|Mixed|Align|PropertyTypes}
    */
   getGenericChild() {
     const offset = this.view.getUint32(0);
     const len = this.view.getUint32(4) - offset;
-    return TestStruct(new DataView(this.view.buffer, offset + this.view.byteOffset, len));
+    const start = offset + this.view.byteOffset;
+    return TestStruct(new DataView(this.view.buffer, start, len));
   }
 
   /**
@@ -659,6 +662,251 @@ export class Mixed {
 }
 
 /**
+ * Testing byte alignment
+ */
+export class Align {
+  /**
+   * Creates a Align instance to access the different properties.
+   * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
+   *   Align.pack(..., includeType=false);
+   */
+  constructor(data) {
+    if (!ArrayBuffer.isView(data)) {
+      this.view = new DataView(data);
+    } else if (data instanceof DataView) {
+      this.view = data;
+    } else {
+      this.view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    }
+  }
+
+  /**
+   * Returns the type id of this struct.
+   * Can be used for example in switch statements together with TYPES.
+   * @returns {number}
+   */
+  typeId() {
+    return 4;
+  }
+
+  /**
+   * Creates an ArrayBuffer including all the values
+   * @param {string|undefined} propGap1
+   * @param {Uint32Array} propAligned
+   * @param {string} propGap2
+   * @param {Uint32Array} propUnaligned
+   * @param {ArrayBuffer|undefined} propChild
+   * @param {DataView|undefined} propDataView
+   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   *   TestStruct(), if false, it can only be parsed by calling new Align();
+   *   Default: false
+   * @returns {ArrayBuffer}
+   */
+  static pack(
+    propGap1,
+    propAligned,
+    propGap2,
+    propUnaligned,
+    propChild,
+    propDataView,
+    includeType,
+  ) {
+    const typeOffset = includeType ? 1 : 0;
+    let len = typeOffset + 25;
+    let pointerOffset = 25;
+    let uint8ArrayGap1;
+    if (propGap1 !== undefined) {
+      uint8ArrayGap1 = new TextEncoder().encode(propGap1);
+      len += uint8ArrayGap1.length;
+    }
+    const paddingAligned = 4 - ((len % 4) || 4);
+    len += paddingAligned;
+    const uint8ArrayAligned = new Uint8Array(
+      propAligned.buffer,
+      propAligned.byteOffset,
+      propAligned.byteLength,
+    );
+    len += uint8ArrayAligned.length;
+    const uint8ArrayGap2 = new TextEncoder().encode(propGap2);
+    len += uint8ArrayGap2.length;
+    const uint8ArrayUnaligned = new Uint8Array(
+      propUnaligned.buffer,
+      propUnaligned.byteOffset,
+      propUnaligned.byteLength,
+    );
+    len += uint8ArrayUnaligned.length;
+    let uint8ArrayChild;
+    let paddingChild = 0;
+    if (propChild !== undefined) {
+      paddingChild = 4 - ((len % 4) || 4);
+      len += paddingChild;
+      uint8ArrayChild = new Uint8Array(propChild);
+      len += uint8ArrayChild.length;
+    }
+    let uint8ArrayDataView;
+    let paddingDataView = 0;
+    if (propDataView !== undefined) {
+      paddingDataView = 4 - ((len % 4) || 4);
+      len += paddingDataView;
+      uint8ArrayDataView = new Uint8Array(
+        propDataView.buffer,
+        propDataView.byteOffset,
+        propDataView.byteLength,
+      );
+      len += uint8ArrayDataView.length;
+    }
+    const buffer = new ArrayBuffer(len);
+    const view = new DataView(buffer, typeOffset);
+    const uint8Array = new Uint8Array(buffer);
+    if (includeType) {
+      uint8Array[0] = 4;
+    }
+    if (propGap1 !== undefined) {
+      view.setUint8(24, view.getUint8(24) | 1);
+      uint8Array.set(uint8ArrayGap1, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayGap1.byteLength;
+    }
+    view.setUint32(0, pointerOffset);
+    pointerOffset += paddingAligned;
+    uint8Array.set(uint8ArrayAligned, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayAligned.byteLength;
+    view.setUint32(4, pointerOffset);
+    uint8Array.set(uint8ArrayGap2, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayGap2.byteLength;
+    view.setUint32(8, pointerOffset);
+    uint8Array.set(uint8ArrayUnaligned, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayUnaligned.byteLength;
+    view.setUint32(12, pointerOffset);
+    if (propChild !== undefined) {
+      view.setUint8(24, view.getUint8(24) | 2);
+      pointerOffset += paddingChild;
+      uint8Array.set(uint8ArrayChild, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayChild.byteLength;
+    }
+    view.setUint32(16, pointerOffset);
+    if (propDataView !== undefined) {
+      view.setUint8(24, view.getUint8(24) | 4);
+      pointerOffset += paddingDataView;
+      uint8Array.set(uint8ArrayDataView, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayDataView.byteLength;
+    }
+    view.setUint32(20, pointerOffset);
+    return buffer;
+  }
+
+  /**
+   * Checks if Gap1 is set
+   * @returns {boolean}
+   */
+  hasGap1() {
+    return !!(this.view.getUint8(24) & 1);
+  }
+
+  /**
+   * @returns {string|undefined}
+   */
+  getGap1() {
+    if (this.hasGap1()) {
+      const offset = 25;
+      const len = this.view.getUint32(0) - offset;
+      const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+      return new TextDecoder().decode(dataBuffer);
+    }
+    return undefined;
+  }
+
+  /**
+   * @returns {Uint32Array}
+   */
+  getAligned() {
+    const offset = this.view.getUint32(0);
+    let len = this.view.getUint32(4) - offset;
+    let start = offset + this.view.byteOffset;
+    const padding = 4 - ((start % 4) || 4);
+    start += padding;
+    len -= padding;
+    if (start % 4 === 0) {
+      return new Uint32Array(this.view.buffer, start, len / 4);
+    }
+    return new Uint32Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {string}
+   */
+  getGap2() {
+    const offset = this.view.getUint32(4);
+    const len = this.view.getUint32(8) - offset;
+    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+    return new TextDecoder().decode(dataBuffer);
+  }
+
+  /**
+   * @returns {Uint32Array}
+   */
+  getUnaligned() {
+    const offset = this.view.getUint32(8);
+    const len = this.view.getUint32(12) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 4 === 0) {
+      return new Uint32Array(this.view.buffer, start, len / 4);
+    }
+    return new Uint32Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * Checks if Child is set
+   * @returns {boolean}
+   */
+  hasChild() {
+    return !!(this.view.getUint8(24) & 2);
+  }
+
+  /**
+   * @returns {Align|undefined}
+   */
+  getChild() {
+    if (this.hasChild()) {
+      const offset = this.view.getUint32(12);
+      let len = this.view.getUint32(16) - offset;
+      let start = offset + this.view.byteOffset;
+      const padding = 4 - ((start % 4) || 4);
+      start += padding;
+      len -= padding;
+      return new Align(new DataView(this.view.buffer, start, len));
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks if DataView is set
+   * @returns {boolean}
+   */
+  hasDataView() {
+    return !!(this.view.getUint8(24) & 4);
+  }
+
+  /**
+   * @returns {DataView|undefined}
+   */
+  getDataView() {
+    if (this.hasDataView()) {
+      const offset = this.view.getUint32(16);
+      let len = this.view.getUint32(20) - offset;
+      let start = offset + this.view.byteOffset;
+      const padding = 4 - ((start % 4) || 4);
+      start += padding;
+      len -= padding;
+      if (start % 4 === 0) {
+        return new DataView(this.view.buffer, start, len);
+      }
+      return new DataView(this.view.buffer.slice(start, start + len));
+    }
+    return undefined;
+  }
+}
+
+/**
  * All allowed builtin types
  */
 export class PropertyTypes {
@@ -683,7 +931,7 @@ export class PropertyTypes {
    * @returns {number}
    */
   typeId() {
-    return 4;
+    return 5;
   }
 
   /**
@@ -703,6 +951,14 @@ export class PropertyTypes {
    * @param {DataView} propDataView
    * @param {Int8Array} propInt8Array
    * @param {Uint8Array} propUint8Array
+   * @param {Int16Array} propInt16Array
+   * @param {Uint16Array} propUint16Array
+   * @param {Int32Array} propInt32Array
+   * @param {Uint32Array} propUint32Array
+   * @param {BigInt64Array} propBigInt64Array
+   * @param {BigUint64Array} propBigUint64Array
+   * @param {Float32Array} propFloat32Array
+   * @param {Float64Array} propFloat64Array
    * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new PropertyTypes();
    *   Default: false
@@ -724,11 +980,19 @@ export class PropertyTypes {
     propDataView,
     propInt8Array,
     propUint8Array,
+    propInt16Array,
+    propUint16Array,
+    propInt32Array,
+    propUint32Array,
+    propBigInt64Array,
+    propBigUint64Array,
+    propFloat32Array,
+    propFloat64Array,
     includeType,
   ) {
     const typeOffset = includeType ? 1 : 0;
-    let len = typeOffset + 62;
-    let pointerOffset = 62;
+    let len = typeOffset + 94;
+    let pointerOffset = 94;
     const uint8ArrayString = new TextEncoder().encode(propString);
     len += uint8ArrayString.length;
     const uint8ArrayJSON = new TextEncoder().encode(JSON.stringify(propJSON));
@@ -747,11 +1011,59 @@ export class PropertyTypes {
     len += uint8ArrayInt8Array.length;
     const uint8ArrayUint8Array = propUint8Array;
     len += uint8ArrayUint8Array.length;
+    const uint8ArrayInt16Array = new Uint8Array(
+      propInt16Array.buffer,
+      propInt16Array.byteOffset,
+      propInt16Array.byteLength,
+    );
+    len += uint8ArrayInt16Array.length;
+    const uint8ArrayUint16Array = new Uint8Array(
+      propUint16Array.buffer,
+      propUint16Array.byteOffset,
+      propUint16Array.byteLength,
+    );
+    len += uint8ArrayUint16Array.length;
+    const uint8ArrayInt32Array = new Uint8Array(
+      propInt32Array.buffer,
+      propInt32Array.byteOffset,
+      propInt32Array.byteLength,
+    );
+    len += uint8ArrayInt32Array.length;
+    const uint8ArrayUint32Array = new Uint8Array(
+      propUint32Array.buffer,
+      propUint32Array.byteOffset,
+      propUint32Array.byteLength,
+    );
+    len += uint8ArrayUint32Array.length;
+    const uint8ArrayBigInt64Array = new Uint8Array(
+      propBigInt64Array.buffer,
+      propBigInt64Array.byteOffset,
+      propBigInt64Array.byteLength,
+    );
+    len += uint8ArrayBigInt64Array.length;
+    const uint8ArrayBigUint64Array = new Uint8Array(
+      propBigUint64Array.buffer,
+      propBigUint64Array.byteOffset,
+      propBigUint64Array.byteLength,
+    );
+    len += uint8ArrayBigUint64Array.length;
+    const uint8ArrayFloat32Array = new Uint8Array(
+      propFloat32Array.buffer,
+      propFloat32Array.byteOffset,
+      propFloat32Array.byteLength,
+    );
+    len += uint8ArrayFloat32Array.length;
+    const uint8ArrayFloat64Array = new Uint8Array(
+      propFloat64Array.buffer,
+      propFloat64Array.byteOffset,
+      propFloat64Array.byteLength,
+    );
+    len += uint8ArrayFloat64Array.length;
     const buffer = new ArrayBuffer(len);
     const view = new DataView(buffer, typeOffset);
     const uint8Array = new Uint8Array(buffer);
     if (includeType) {
-      uint8Array[0] = 4;
+      uint8Array[0] = 5;
     }
     view.setUint8(0, propUint8);
     view.setUint16(1, propUint16);
@@ -778,6 +1090,30 @@ export class PropertyTypes {
     uint8Array.set(uint8ArrayUint8Array, pointerOffset + typeOffset);
     pointerOffset += uint8ArrayUint8Array.byteLength;
     view.setUint32(58, pointerOffset);
+    uint8Array.set(uint8ArrayInt16Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayInt16Array.byteLength;
+    view.setUint32(62, pointerOffset);
+    uint8Array.set(uint8ArrayUint16Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayUint16Array.byteLength;
+    view.setUint32(66, pointerOffset);
+    uint8Array.set(uint8ArrayInt32Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayInt32Array.byteLength;
+    view.setUint32(70, pointerOffset);
+    uint8Array.set(uint8ArrayUint32Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayUint32Array.byteLength;
+    view.setUint32(74, pointerOffset);
+    uint8Array.set(uint8ArrayBigInt64Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayBigInt64Array.byteLength;
+    view.setUint32(78, pointerOffset);
+    uint8Array.set(uint8ArrayBigUint64Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayBigUint64Array.byteLength;
+    view.setUint32(82, pointerOffset);
+    uint8Array.set(uint8ArrayFloat32Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayFloat32Array.byteLength;
+    view.setUint32(86, pointerOffset);
+    uint8Array.set(uint8ArrayFloat64Array, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayFloat64Array.byteLength;
+    view.setUint32(90, pointerOffset);
     return buffer;
   }
 
@@ -855,7 +1191,7 @@ export class PropertyTypes {
    * @returns {string}
    */
   getString() {
-    const offset = 62;
+    const offset = 94;
     const len = this.view.getUint32(42) - offset;
     const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
     return new TextDecoder().decode(dataBuffer);
@@ -897,6 +1233,110 @@ export class PropertyTypes {
     const len = this.view.getUint32(58) - offset;
     return new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
   }
+
+  /**
+   * @returns {Int16Array}
+   */
+  getInt16Array() {
+    const offset = this.view.getUint32(58);
+    const len = this.view.getUint32(62) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 2 === 0) {
+      return new Int16Array(this.view.buffer, start, len / 2);
+    }
+    return new Int16Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {Uint16Array}
+   */
+  getUint16Array() {
+    const offset = this.view.getUint32(62);
+    const len = this.view.getUint32(66) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 2 === 0) {
+      return new Uint16Array(this.view.buffer, start, len / 2);
+    }
+    return new Uint16Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {Int32Array}
+   */
+  getInt32Array() {
+    const offset = this.view.getUint32(66);
+    const len = this.view.getUint32(70) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 4 === 0) {
+      return new Int32Array(this.view.buffer, start, len / 4);
+    }
+    return new Int32Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {Uint32Array}
+   */
+  getUint32Array() {
+    const offset = this.view.getUint32(70);
+    const len = this.view.getUint32(74) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 4 === 0) {
+      return new Uint32Array(this.view.buffer, start, len / 4);
+    }
+    return new Uint32Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {BigInt64Array}
+   */
+  getBigInt64Array() {
+    const offset = this.view.getUint32(74);
+    const len = this.view.getUint32(78) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 8 === 0) {
+      return new BigInt64Array(this.view.buffer, start, len / 8);
+    }
+    return new BigInt64Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {BigUint64Array}
+   */
+  getBigUint64Array() {
+    const offset = this.view.getUint32(78);
+    const len = this.view.getUint32(82) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 8 === 0) {
+      return new BigUint64Array(this.view.buffer, start, len / 8);
+    }
+    return new BigUint64Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {Float32Array}
+   */
+  getFloat32Array() {
+    const offset = this.view.getUint32(82);
+    const len = this.view.getUint32(86) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 4 === 0) {
+      return new Float32Array(this.view.buffer, start, len / 4);
+    }
+    return new Float32Array(this.view.buffer.slice(start, start + len));
+  }
+
+  /**
+   * @returns {Float64Array}
+   */
+  getFloat64Array() {
+    const offset = this.view.getUint32(86);
+    const len = this.view.getUint32(90) - offset;
+    const start = offset + this.view.byteOffset;
+    if (start % 8 === 0) {
+      return new Float64Array(this.view.buffer, start, len / 8);
+    }
+    return new Float64Array(this.view.buffer.slice(start, start + len));
+  }
 }
 
 /**
@@ -909,13 +1349,14 @@ export const TYPE_ID = {
   Optional: 1,
   Parent: 2,
   Mixed: 3,
-  PropertyTypes: 4,
+  Align: 4,
+  PropertyTypes: 5,
 };
 
 /**
  * Converts an ArrayBuffer into one of the TestStruct structs.
  * @param {ArrayBuffer|DataView|TypedArray} data
- * @returns {Simple|Optional|Parent|Mixed|PropertyTypes}
+ * @returns {Simple|Optional|Parent|Mixed|Align|PropertyTypes}
  */
 export function TestStruct(data) {
   let view;
@@ -936,6 +1377,8 @@ export function TestStruct(data) {
       return new Parent(dataView);
     case TYPE_ID.Mixed:
       return new Mixed(dataView);
+    case TYPE_ID.Align:
+      return new Align(dataView);
     case TYPE_ID.PropertyTypes:
       return new PropertyTypes(dataView);
     default:

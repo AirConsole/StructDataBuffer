@@ -63,16 +63,18 @@ export class <%= structName %> {
           const indent = prop.optional ? '  ': '';
           const c = prop.optional ? '': 'const ';
           if (prop.pointer !== undefined) {%><% if (prop.optional) { %>
-    let uint8Array<%= prop.name %>;
+    let uint8Array<%= prop.name %>;<% if (prop.padAlign){%>
+    let padding<%= prop.name %> = 0;<%}%>
     if (prop<%=prop.name%> !== undefined) {<% } %><% if (prop.type === 'string') {%>
 <%=indent%>    <%=c%>uint8Array<%= prop.name %> = new TextEncoder().encode(prop<%= prop.name %>);<% } else if (prop.type === 'JSON') { %>
-<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new TextEncoder().encode(JSON.stringify(prop<%= prop.name %>));<% } else if (propertyTypes[prop.type].isArrayBuffer) { %>
-<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new Uint8Array(prop<%= prop.name %>);<% } else if (prop.type !== 'Uint8Array') { %>
-<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new Uint8Array(
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new TextEncoder().encode(JSON.stringify(prop<%= prop.name %>));<% } else if (prop.type !== 'Uint8Array') { %><% if (prop.padAlign) {%>
+<%=indent%>    <%=c%>padding<%= prop.name %> = <%= prop.padAlign %> - ((len % <%= prop.padAlign %>) || <%= prop.padAlign %>);
+<%=indent%>    len += padding<%= prop.name %>;<% } %>
+<%=indent%>    <%=c%>uint8Array<%= prop.name %> = new Uint8Array(<% if (propertyTypes[prop.type].isArrayBuffer) { %>prop<%= prop.name %><% } else {%>
 <%=indent%>      prop<%= prop.name %>.buffer,
 <%=indent%>      prop<%= prop.name %>.byteOffset,
 <%=indent%>      prop<%= prop.name %>.byteLength,
-<%=indent%>    );<% } else { %>
+<%=indent%>    <% } %>);<% } else { %>
 <%=indent%>    <%=c%>uint8Array<%= prop.name %> = prop<%= prop.name %>;<% } %>
 <%=indent%>    len += uint8Array<%= prop.name %>.length;<% if (prop.optional) {%>
     }<% } %><% } %><% } } %>
@@ -90,7 +92,8 @@ export class <%= structName %> {
     if (prop<%= prop.name%> !== undefined) {
       view.setUint8(<%= prop.optionalByte + struct.optionalOffset %>, view.getUint8(<%= prop.optionalByte + struct.optionalOffset %>) | <%= prop.optionalBitMask %>);<%}%><% if (prop.pointer === undefined) { %>
 <%=indent%>    view.set<%= prop.type %>(<%= prop.offset %>, prop<%= prop.name%>);<% if (prop.optional) { %>
-    }<%}%><% } else {%>
+    }<%}%><% } else {%><% if (prop.padAlign) { %>
+<%=indent%>    pointerOffset += padding<%= prop.name %>;<% } %>
 <%=indent%>    uint8Array.set(uint8Array<%= prop.name %>, pointerOffset + typeOffset);
 <%=indent%>    pointerOffset += uint8Array<%= prop.name %>.byteLength;<% if (prop.optional) { %>
     }<%}%>
@@ -116,12 +119,20 @@ export class <%= structName %> {
     if (this.has<%=prop.name%>()) {<% } %><% if (prop.pointer === undefined) {%>
 <%=indent%>    return this.view.get<%= prop.type%>(<%= prop.offset %>);<% } else { %>
 <%=indent%>    const offset = <%= prop.pointer === -1 ? struct.propertiesSize : 'this.view.getUint32(' + struct.properties[prop.pointer].offset + ')'%>;
-<%=indent%>    const len = <%= 'this.view.getUint32(' + prop.offset + ')' %> - offset;<% if (prop.type === 'JSON' || prop.type === 'string') { %>
+<%=indent%>    <%= prop.padAlign ? 'let' : 'const' %> len = <%= 'this.view.getUint32(' + prop.offset + ')' %> - offset;<% if (prop.type === 'JSON' || prop.type === 'string') { %>
 <%=indent%>    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);<% if (prop.type === 'string') { %>
 <%=indent%>    return new TextDecoder().decode(dataBuffer);<% } else { %>
-<%=indent%>    return JSON.parse(new TextDecoder().decode(dataBuffer));<% }} else if (propertyTypes[prop.type].isArrayBuffer) { %>
-<%=indent%>    return <%= prop.type === name ? name : 'new ' + prop.type %>(new DataView(this.view.buffer, offset + this.view.byteOffset, len));<% } else { %>
-<%=indent%>    return new <%= prop.type %>(this.view.buffer, offset + this.view.byteOffset, len);<% }} %><% if (prop.optional) {%>
+<%=indent%>    return JSON.parse(new TextDecoder().decode(dataBuffer));<% }} else if (prop.typeAlign === undefined && prop.padAlign === undefined && !propertyTypes[prop.type].isArrayBuffer) { %>
+<%=indent%>    return new <%= prop.type %>(this.view.buffer, offset + this.view.byteOffset, len);<% } else { %>
+<%=indent%>    <%= prop.padAlign ? 'let' : 'const' %> start = offset + this.view.byteOffset;<% if (prop.padAlign) { %>
+<%=indent%>    const padding = <%= prop.padAlign %> - ((start % <%= prop.padAlign %>) || <%= prop.padAlign %>);
+<%=indent%>    start += padding;
+<%=indent%>    len -= padding;<% } %><% if (propertyTypes[prop.type].isArrayBuffer) { %>
+<%=indent%>    return <%= prop.type === name ? name : 'new ' + prop.type %>(new DataView(this.view.buffer, start, len));<% } else {%>
+<%=indent%>    if (start % <%= prop.typeAlign%> === 0) {
+<%=indent%>      return new <%= prop.type %>(this.view.buffer, start, len<%= prop.lenAlign ? ' / ' + prop.lenAlign : ''%>);
+<%=indent%>    }
+<%=indent%>    return new <%= prop.type %>(this.view.buffer.slice(start, start + len));<% }}} %><% if (prop.optional) {%>
     }
     return undefined;<% } %>
   }<% } %>

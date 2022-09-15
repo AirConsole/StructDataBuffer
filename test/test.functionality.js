@@ -6,7 +6,7 @@ import {
   Parent,
   PropertyTypes,
   Simple,
-  TYPE_ID, Optional,
+  TYPE_ID, Optional, Align,
 } from './generated/test.js';
 
 describe('Test functionality of generated files', () => {
@@ -95,6 +95,14 @@ describe('Test functionality of generated files', () => {
       new DataView(new Uint8Array([2, 2]).buffer),
       new Int8Array([-128, 127]),
       new Uint8Array([0, 255]),
+      new Int16Array([-32768, 32767]),
+      new Uint16Array([0, 65535]),
+      new Int32Array([-2147483648, 2147483647]),
+      new Uint32Array([0, 4294967295]),
+      new BigInt64Array([-1n, 1n]),
+      new BigUint64Array([0n, 1n]),
+      new Float32Array([-0.5, 0.5]),
+      new Float64Array([-0.5, 0.5]),
       true,
     );
     const flatArr = (x) => JSON.stringify(Array.from(x));
@@ -117,6 +125,20 @@ describe('Test functionality of generated files', () => {
       assert.equal(numbers.getDataView().getUint8(1), 2);
       assert.equal(flatArr(numbers.getInt8Array()), flatArr([-128, 127]));
       assert.equal(flatArr(numbers.getUint8Array()), flatArr([0, 255]));
+      assert.equal(flatArr(numbers.getInt8Array()), flatArr([-128, 127]));
+      assert.equal(flatArr(numbers.getUint8Array()), flatArr([0, 255]));
+      assert.equal(flatArr(numbers.getInt16Array()), flatArr([-32768, 32767]));
+      assert.equal(flatArr(numbers.getUint16Array()), flatArr([0, 65535]));
+      assert.equal(flatArr(numbers.getInt32Array()), flatArr([-2147483648, 2147483647]));
+      assert.equal(flatArr(numbers.getUint32Array()), flatArr([0, 4294967295]));
+      assert.equal(flatArr(numbers.getFloat32Array()), flatArr([-0.5, 0.5]));
+      assert.equal(flatArr(numbers.getFloat64Array()), flatArr([-0.5, 0.5]));
+      assert.equal(numbers.getBigInt64Array().length, 2);
+      assert.equal(numbers.getBigInt64Array()[0], -1n);
+      assert.equal(numbers.getBigInt64Array()[1], 1n);
+      assert.equal(numbers.getBigUint64Array().length, 2);
+      assert.equal(numbers.getBigUint64Array()[0], 0n);
+      assert.equal(numbers.getBigUint64Array()[1], 1n);
     });
   });
   describe('Optional properties', () => {
@@ -157,6 +179,55 @@ describe('Test functionality of generated files', () => {
       assert.equal(optional.getOptionalSimple(), undefined);
       assert.equal(optional.hasOptionalFloat32(), true);
       assert.equal(optional.getOptionalFloat32(), 0.5);
+    });
+  });
+  describe('Padding pointers', () => {
+    const arrEq = (a, b) => {
+      assert.equal(JSON.stringify(Array.from(a)), JSON.stringify(Array.from(b)));
+    };
+    it('should handle pad pointers correctly', () => {
+      const arr1 = Align.pack(
+        'a',
+        new Uint32Array([1, 2, 3]),
+        'b', // Screw up alignment
+        new Uint32Array([4, 5, 6]),
+        undefined,
+        new DataView(new Uint32Array([6, 7, 8]).buffer),
+      );
+      const arr2 = Align.pack(
+        'AA', // Two letters so we can make sure it shifted compared to arr1
+        new Uint32Array([1, 2, 3]),
+        'b', // Screw up alignment
+        new Uint32Array([4, 5, 6]),
+        arr1,
+      );
+      const aligned1 = new Align(arr1);
+      const aligned2 = new Align(arr2);
+      assert.equal(aligned1.getGap1(), 'a');
+      assert.equal(aligned2.getGap1(), 'AA');
+      arrEq(aligned1.getAligned(), [1, 2, 3]);
+      arrEq(aligned2.getAligned(), [1, 2, 3]);
+      arrEq(aligned2.getChild().getAligned(), [1, 2, 3]);
+      assert.equal(aligned1.getGap2(), 'b');
+      assert.equal(aligned2.getGap2(), 'b');
+      arrEq(aligned1.getUnaligned(), [4, 5, 6]);
+      arrEq(aligned2.getUnaligned(), [4, 5, 6]);
+      arrEq(aligned2.getChild().getUnaligned(), [4, 5, 6]);
+      arrEq(new Uint32Array(
+        aligned1.getDataView().buffer,
+        aligned1.getDataView().byteOffset,
+        aligned1.getDataView().byteLength / 4,
+      ), [6, 7, 8]);
+      arrEq(new Uint32Array(
+        aligned2.getChild().getDataView().buffer,
+        aligned2.getChild().getDataView().byteOffset,
+        aligned2.getChild().getDataView().byteLength / 4,
+      ), [6, 7, 8]);
+      assert.equal(aligned1.getAligned().buffer, arr1);
+      assert.equal(aligned2.getAligned().buffer, arr2);
+      assert.equal(aligned2.getChild().view.buffer, arr2);
+      assert.equal(aligned1.getUnaligned().buffer !== arr1
+                   || aligned2.getUnaligned().buffer !== arr2, true);
     });
   });
 });
