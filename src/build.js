@@ -4,6 +4,7 @@ import fs from 'fs';
 const alphaNum = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
 const PROPERTY_TYPES = {
+  boolean: { size: 0, doc: 'boolean' },
   Uint8: { size: 1, doc: 'number' },
   Uint16: { size: 2, doc: 'number' },
   Uint32: { size: 4, doc: 'number' },
@@ -102,6 +103,11 @@ function createTemplateData(input) {
         if (prop.optional) {
           prop.optionalBitMask = 2 ** (optionalCount % 8);
           prop.optionalByte = Math.floor(optionalCount / 8);
+          optionalCount += 1;
+        }
+        if (prop.type === 'boolean') {
+          prop.boolBitMask = 2 ** (optionalCount % 8);
+          prop.boolByte = Math.floor(optionalCount / 8);
           optionalCount += 1;
         }
         if (propType.pointer) {

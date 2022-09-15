@@ -110,6 +110,8 @@ export class Optional {
    * @param {Int8Array|undefined} propOptionalInt8Array
    * @param {ArrayBuffer|undefined} propOptionalSimple
    * @param {number|undefined} propOptionalFloat32
+   * @param {boolean} propRequiredBoolean
+   * @param {boolean|undefined} propOptionalBoolean
    * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new Optional();
    *   Default: false
@@ -127,6 +129,8 @@ export class Optional {
     propOptionalInt8Array,
     propOptionalSimple,
     propOptionalFloat32,
+    propRequiredBoolean,
+    propOptionalBoolean,
     includeType,
   ) {
     const typeOffset = includeType ? 1 : 0;
@@ -229,6 +233,15 @@ export class Optional {
     if (propOptionalFloat32 !== undefined) {
       view.setUint8(37, view.getUint8(37) | 1);
       view.setFloat32(32, propOptionalFloat32);
+    }
+    if (propRequiredBoolean) {
+      view.setUint8(37, view.getUint8(37) | 2);
+    }
+    if (propOptionalBoolean !== undefined) {
+      view.setUint8(37, view.getUint8(37) | 4);
+      if (propOptionalBoolean) {
+        view.setUint8(37, view.getUint8(37) | 8);
+      }
     }
     return buffer;
   }
@@ -423,6 +436,31 @@ export class Optional {
   getOptionalFloat32() {
     if (this.hasOptionalFloat32()) {
       return this.view.getFloat32(32);
+    }
+    return undefined;
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  getRequiredBoolean() {
+    return !!(this.view.getUint8(37) & 2);
+  }
+
+  /**
+   * Checks if OptionalBoolean is set
+   * @returns {boolean}
+   */
+  hasOptionalBoolean() {
+    return !!(this.view.getUint8(37) & 4);
+  }
+
+  /**
+   * @returns {boolean|undefined}
+   */
+  getOptionalBoolean() {
+    if (this.hasOptionalBoolean()) {
+      return !!(this.view.getUint8(37) & 8);
     }
     return undefined;
   }

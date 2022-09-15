@@ -74,7 +74,7 @@ console.log(player.getName(), player.hasAge(), player.getAge());
 
 ## Property Types:
 ### Standard types
-`Uint8`, `Uint16`, `Uint32`, `BigUint64`, `Int8`, `Int16`, `Int32`, `BigInt64`, `Float32`, `Float64`, `string`, `JSON`, `DataView`, `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`, `BigInt64Array`, `BigUint64Array`, `Float32Array`, `Float64Array`
+`Uint8`, `Uint16`, `Uint32`, `BigUint64`, `Int8`, `Int16`, `Int32`, `BigInt64`, `Float32`, `Float64`, `boolean`, `string`, `JSON`, `DataView`, `Int8Array`, `Uint8Array`, `Int16Array`, `Uint16Array`, `Int32Array`, `Uint32Array`, `BigInt64Array`, `BigUint64Array`, `Float32Array`, `Float64Array`
 
 ### Custom Types
 Any type defined in the same input file can be referenced.

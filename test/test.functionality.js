@@ -155,6 +155,8 @@ describe('Test functionality of generated files', () => {
         new Int8Array([4, 5]),
         undefined,
         0.5,
+        true,
+        false,
       );
       const optional = new Optional(optionalArr);
       assert.equal(optional.hasOptionalUint8(), false);
@@ -179,6 +181,9 @@ describe('Test functionality of generated files', () => {
       assert.equal(optional.getOptionalSimple(), undefined);
       assert.equal(optional.hasOptionalFloat32(), true);
       assert.equal(optional.getOptionalFloat32(), 0.5);
+      assert.equal(optional.getRequiredBoolean(), true);
+      assert.equal(optional.hasOptionalBoolean(), true);
+      assert.equal(optional.getOptionalBoolean(), false);
     });
   });
   describe('Padding pointers', () => {

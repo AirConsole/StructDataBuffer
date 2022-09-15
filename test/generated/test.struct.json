@@ -68,6 +68,15 @@
           "name": "OptionalFloat32",
           "type": "Float32",
           "optional": true
+        },
+        {
+          "name": "RequiredBoolean",
+          "type": "boolean"
+        },
+        {
+          "name": "OptionalBoolean",
+          "type": "boolean",
+          "optional": true
         }
       ]
     },

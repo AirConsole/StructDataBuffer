@@ -90,8 +90,11 @@ export class <%= structName %> {
   const prop = struct.properties[p];
   const indent = prop.optional ? '  ': '';%><% if (prop.optional) { %>
     if (prop<%= prop.name%> !== undefined) {
-      view.setUint8(<%= prop.optionalByte + struct.optionalOffset %>, view.getUint8(<%= prop.optionalByte + struct.optionalOffset %>) | <%= prop.optionalBitMask %>);<%}%><% if (prop.pointer === undefined) { %>
-<%=indent%>    view.set<%= prop.type %>(<%= prop.offset %>, prop<%= prop.name%>);<% if (prop.optional) { %>
+      view.setUint8(<%= prop.optionalByte + struct.optionalOffset %>, view.getUint8(<%= prop.optionalByte + struct.optionalOffset %>) | <%= prop.optionalBitMask %>);<%}%><% if (prop.pointer === undefined) { %><% if (prop.type !== 'boolean') {%>
+<%=indent%>    view.set<%= prop.type %>(<%= prop.offset %>, prop<%= prop.name%>);<% } else { %>
+<%=indent%>    if (prop<%=prop.name%>) {
+<%= indent %>      view.setUint8(<%= prop.boolByte + struct.optionalOffset %>, view.getUint8(<%= prop.boolByte + struct.optionalOffset %>) | <%= prop.boolBitMask %>);
+<%= indent %>    }<% } %><% if (prop.optional) { %>
     }<%}%><% } else {%><% if (prop.padAlign) { %>
 <%=indent%>    pointerOffset += padding<%= prop.name %>;<% } %>
 <%=indent%>    uint8Array.set(uint8Array<%= prop.name %>, pointerOffset + typeOffset);
@@ -116,7 +119,8 @@ export class <%= structName %> {
    * @returns {<%= propertyTypes[prop.type].doc %><%= prop.optional ? '|undefined':''%>}
    */
   get<%=prop.name%>() {<% if (prop.optional) {%>
-    if (this.has<%=prop.name%>()) {<% } %><% if (prop.pointer === undefined) {%>
+    if (this.has<%=prop.name%>()) {<% } %><% if (prop.type === 'boolean') {%>
+<%=indent%>    return !!(this.view.getUint8(<%= prop.boolByte + struct.optionalOffset %>) & <%= prop.boolBitMask%>);<% } else if (prop.pointer === undefined) {%>
 <%=indent%>    return this.view.get<%= prop.type%>(<%= prop.offset %>);<% } else { %>
 <%=indent%>    const offset = <%= prop.pointer === -1 ? struct.propertiesSize : 'this.view.getUint32(' + struct.properties[prop.pointer].offset + ')'%>;
 <%=indent%>    <%= prop.padAlign ? 'let' : 'const' %> len = <%= 'this.view.getUint32(' + prop.offset + ')' %> - offset;<% if (prop.type === 'JSON' || prop.type === 'string') { %>
