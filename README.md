@@ -52,7 +52,7 @@ This would generate all Classes needed for you, here is a simplified overview:
 ```javascript
 class Player {
   static pack(name, age)    // Creates an array buffer that includes name & age
-  consturctor(arrayBuffer)  // Parses an array buffer created with pack()
+  constructor(arrayBuffer)  // Parses an array buffer created with pack()
   getName()                 // returns the Name
   hasAge()                  // Checks if Age was set
   getAge()                  // Gets the Age
