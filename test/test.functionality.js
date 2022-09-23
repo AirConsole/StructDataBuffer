@@ -6,7 +6,7 @@ import {
   Parent,
   PropertyTypes,
   Simple,
-  TYPE_ID, Optional, Align,
+  TYPE_ID, Optional, Align, UnalignedParent,
 } from './generated/test.js';
 
 describe('Test functionality of generated files', () => {
@@ -233,6 +233,23 @@ describe('Test functionality of generated files', () => {
       assert.equal(aligned2.getChild().view.buffer, arr2);
       assert.equal(aligned1.getUnaligned().buffer !== arr1
                    || aligned2.getUnaligned().buffer !== arr2, true);
+    });
+  });
+  describe('Unaligned Parent', () => {
+    const arrEq = (a, b) => {
+      assert.equal(JSON.stringify(Array.from(a)), JSON.stringify(Array.from(b)));
+    };
+    it('should handle unaligned children that are aligned', () => {
+      const childArr = Align.pack(
+        'a',
+        new Uint32Array([1, 2, 3]),
+        'b',
+        new Uint32Array([4, 5, 6]),
+      );
+      const arr = UnalignedParent.pack(childArr, true);
+      const parent = TestStruct(arr);
+      const child = parent.getChild();
+      arrEq(child.getAligned(), [1, 2, 3]);
     });
   });
 });

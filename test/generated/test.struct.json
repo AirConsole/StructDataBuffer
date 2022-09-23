@@ -161,6 +161,17 @@
       ]
     },
     {
+      "name": "UnalignedParent",
+      "doc": "A parent that doesn't align the child",
+      "properties": [
+        {
+          "name": "Child",
+          "type": "Align",
+          "optional": true
+        }
+      ]
+    },
+    {
       "name": "PropertyTypes",
       "doc": "All allowed builtin types",
       "properties": [

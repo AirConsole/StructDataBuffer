@@ -552,7 +552,7 @@ export class Parent {
   }
 
   /**
-   * @returns {Simple|Optional|Parent|Mixed|Align|PropertyTypes}
+   * @returns {Simple|Optional|Parent|Mixed|Align|UnalignedParent|PropertyTypes}
    */
   getGenericChild() {
     const offset = this.view.getUint32(0);
@@ -858,11 +858,10 @@ export class Align {
    */
   getAligned() {
     const offset = this.view.getUint32(0);
-    let len = this.view.getUint32(4) - offset;
-    let start = offset + this.view.byteOffset;
-    const padding = 4 - ((start % 4) || 4);
-    start += padding;
-    len -= padding;
+    const end = this.view.getUint32(4);
+    let len = end - offset;
+    len -= len % 4;
+    const start = end - len + this.view.byteOffset;
     if (start % 4 === 0) {
       return new Uint32Array(this.view.buffer, start, len / 4);
     }
@@ -906,11 +905,10 @@ export class Align {
   getChild() {
     if (this.hasChild()) {
       const offset = this.view.getUint32(12);
-      let len = this.view.getUint32(16) - offset;
-      let start = offset + this.view.byteOffset;
-      const padding = 4 - ((start % 4) || 4);
-      start += padding;
-      len -= padding;
+      const end = this.view.getUint32(16);
+      let len = end - offset;
+      len -= len % 4;
+      const start = end - len + this.view.byteOffset;
       return new Align(new DataView(this.view.buffer, start, len));
     }
     return undefined;
@@ -930,15 +928,99 @@ export class Align {
   getDataView() {
     if (this.hasDataView()) {
       const offset = this.view.getUint32(16);
-      let len = this.view.getUint32(20) - offset;
-      let start = offset + this.view.byteOffset;
-      const padding = 4 - ((start % 4) || 4);
-      start += padding;
-      len -= padding;
+      const end = this.view.getUint32(20);
+      let len = end - offset;
+      len -= len % 4;
+      const start = end - len + this.view.byteOffset;
       if (start % 4 === 0) {
         return new DataView(this.view.buffer, start, len);
       }
       return new DataView(this.view.buffer.slice(start, start + len));
+    }
+    return undefined;
+  }
+}
+
+/**
+ * A parent that doesn&#39;t align the child
+ */
+export class UnalignedParent {
+  /**
+   * Creates a UnalignedParent instance to access the different properties.
+   * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
+   *   UnalignedParent.pack(..., includeType=false);
+   */
+  constructor(data) {
+    if (!ArrayBuffer.isView(data)) {
+      this.view = new DataView(data);
+    } else if (data instanceof DataView) {
+      this.view = data;
+    } else {
+      this.view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    }
+  }
+
+  /**
+   * Returns the type id of this struct.
+   * Can be used for example in switch statements together with TYPES.
+   * @returns {number}
+   */
+  typeId() {
+    return 5;
+  }
+
+  /**
+   * Creates an ArrayBuffer including all the values
+   * @param {ArrayBuffer|undefined} propChild
+   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   *   TestStruct(), if false, it can only be parsed by calling new UnalignedParent();
+   *   Default: false
+   * @returns {ArrayBuffer}
+   */
+  static pack(
+    propChild,
+    includeType,
+  ) {
+    const typeOffset = includeType ? 1 : 0;
+    let len = typeOffset + 5;
+    let pointerOffset = 5;
+    let uint8ArrayChild;
+    if (propChild !== undefined) {
+      uint8ArrayChild = new Uint8Array(propChild);
+      len += uint8ArrayChild.length;
+    }
+    const buffer = new ArrayBuffer(len);
+    const view = new DataView(buffer, typeOffset);
+    const uint8Array = new Uint8Array(buffer);
+    if (includeType) {
+      uint8Array[0] = 5;
+    }
+    if (propChild !== undefined) {
+      view.setUint8(4, view.getUint8(4) | 1);
+      uint8Array.set(uint8ArrayChild, pointerOffset + typeOffset);
+      pointerOffset += uint8ArrayChild.byteLength;
+    }
+    view.setUint32(0, pointerOffset);
+    return buffer;
+  }
+
+  /**
+   * Checks if Child is set
+   * @returns {boolean}
+   */
+  hasChild() {
+    return !!(this.view.getUint8(4) & 1);
+  }
+
+  /**
+   * @returns {Align|undefined}
+   */
+  getChild() {
+    if (this.hasChild()) {
+      const offset = 5;
+      const len = this.view.getUint32(0) - offset;
+      const start = offset + this.view.byteOffset;
+      return new Align(new DataView(this.view.buffer, start, len));
     }
     return undefined;
   }
@@ -969,7 +1051,7 @@ export class PropertyTypes {
    * @returns {number}
    */
   typeId() {
-    return 5;
+    return 6;
   }
 
   /**
@@ -1101,7 +1183,7 @@ export class PropertyTypes {
     const view = new DataView(buffer, typeOffset);
     const uint8Array = new Uint8Array(buffer);
     if (includeType) {
-      uint8Array[0] = 5;
+      uint8Array[0] = 6;
     }
     view.setUint8(0, propUint8);
     view.setUint16(1, propUint16);
@@ -1388,13 +1470,14 @@ export const TYPE_ID = {
   Parent: 2,
   Mixed: 3,
   Align: 4,
-  PropertyTypes: 5,
+  UnalignedParent: 5,
+  PropertyTypes: 6,
 };
 
 /**
  * Converts an ArrayBuffer into one of the TestStruct structs.
  * @param {ArrayBuffer|DataView|TypedArray} data
- * @returns {Simple|Optional|Parent|Mixed|Align|PropertyTypes}
+ * @returns {Simple|Optional|Parent|Mixed|Align|UnalignedParent|PropertyTypes}
  */
 export function TestStruct(data) {
   let view;
@@ -1417,6 +1500,8 @@ export function TestStruct(data) {
       return new Mixed(dataView);
     case TYPE_ID.Align:
       return new Align(dataView);
+    case TYPE_ID.UnalignedParent:
+      return new UnalignedParent(dataView);
     case TYPE_ID.PropertyTypes:
       return new PropertyTypes(dataView);
     default:
