@@ -9,6 +9,20 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable no-use-before-define */
 /* eslint-disable max-len */
+/**
+ * Converts a ArrayBuffer|DataView|TypedArray to a Dataview
+ * @param {ArrayBuffer|DataView|TypedArray} data
+ * @returns {DataView}
+ */
+function convertToDataView(data) {
+  if (!ArrayBuffer.isView(data)) {
+    return new DataView(data);
+  }
+  if (data instanceof DataView) {
+    return data;
+  }
+  return new DataView(data.buffer, data.byteOffset, data.byteLength);
+}
 
 /**
  * A mansion in another world.
@@ -20,13 +34,7 @@ export class Mansion {
    *   Mansion.pack(..., includeType=false);
    */
   constructor(data) {
-    if (!ArrayBuffer.isView(data)) {
-      this.view = new DataView(data);
-    } else if (data instanceof DataView) {
-      this.view = data;
-    } else {
-      this.view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-    }
+    this.view = convertToDataView(data);
   }
 
   /**
@@ -97,14 +105,7 @@ export const TYPE_ID = {
  * @returns {Mansion}
  */
 export function OtherGameObjects(data) {
-  let view;
-  if (!ArrayBuffer.isView(data)) {
-    view = new DataView(data);
-  } else if (data instanceof DataView) {
-    view = data;
-  } else {
-    view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  }
+  const view = convertToDataView(data);
   const dataView = new DataView(view.buffer, view.byteOffset + 1, view.byteLength - 1);
   switch (view.getUint8(0)) {
     case TYPE_ID.Mansion:
