@@ -1,7 +1,7 @@
 {
   "name": "StructDataBuffer",
   "bin": {
-    "struct-data-buffer": "src/build.js"
+    "struct-data-buffer": "build.js"
   },
   "type": "module",
   "version": "1.0.0",

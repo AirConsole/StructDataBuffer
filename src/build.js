@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import ejs from 'ejs';
 import fs from 'fs';
 import path from 'path';
