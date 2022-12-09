@@ -1,5 +1,7 @@
 import ejs from 'ejs';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const alphaNum = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
@@ -154,7 +156,7 @@ function createTemplateData(input) {
 
 export default function build(input) {
   const structure = createTemplateData(input);
-  let template = `${fs.readFileSync('src/template.ejs')}`.trim();
+  let template = `${fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), './template.ejs'))}`.trim();
   if (!template.startsWith('<script>') || !template.endsWith('</script>')) {
     execError('Invalid template: Needs to start with <script></script>');
   }
