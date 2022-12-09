@@ -49,7 +49,7 @@ export class Simple {
   /**
    * Creates an ArrayBuffer including all the values
    * @param {number} propA
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new Simple();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -114,7 +114,7 @@ export class Optional {
    * @param {number|undefined} propOptionalFloat32
    * @param {boolean} propRequiredBoolean
    * @param {boolean|undefined} propOptionalBoolean
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new Optional();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -358,7 +358,8 @@ export class Optional {
       const offset = this.view.getUint32(12);
       const len = this.view.getUint32(16) - offset;
       const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
-      return JSON.parse(new TextDecoder().decode(dataBuffer));
+      const decoded = new TextDecoder().decode(dataBuffer);
+      return decoded ? JSON.parse(decoded) : undefined;
     }
     return undefined;
   }
@@ -495,7 +496,7 @@ export class Parent {
    * @param {ArrayBuffer} propTypedChild
    * @param {ArrayBuffer} propGenericChild
    * @param {DataView} propForeignChild
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new Parent();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -548,7 +549,7 @@ export class Parent {
   }
 
   /**
-   * @returns {Simple|Optional|Parent|Mixed|Align|UnalignedParent|PropertyTypes}
+   * @returns {Simple|Optional|Parent|Mixed|Align|UnalignedParent|PropertyTypes|TestJSON}
    */
   getGenericChild() {
     const offset = this.view.getUint32(0);
@@ -596,7 +597,7 @@ export class Mixed {
    * @param {DataView} propDataView
    * @param {number} propInt8
    * @param {Object|Array|string|number|boolean} propJSON
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new Mixed();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -685,7 +686,8 @@ export class Mixed {
     const offset = this.view.getUint32(5);
     const len = this.view.getUint32(10) - offset;
     const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
-    return JSON.parse(new TextDecoder().decode(dataBuffer));
+    const decoded = new TextDecoder().decode(dataBuffer);
+    return decoded ? JSON.parse(decoded) : undefined;
   }
 }
 
@@ -719,7 +721,7 @@ export class Align {
    * @param {Uint32Array} propUnaligned
    * @param {ArrayBuffer|undefined} propChild
    * @param {DataView|undefined} propDataView
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new Align();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -950,7 +952,7 @@ export class UnalignedParent {
   /**
    * Creates an ArrayBuffer including all the values
    * @param {ArrayBuffer|undefined} propChild
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new UnalignedParent();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -1051,7 +1053,7 @@ export class PropertyTypes {
    * @param {BigUint64Array} propBigUint64Array
    * @param {Float32Array} propFloat32Array
    * @param {Float64Array} propFloat64Array
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   TestStruct(), if false, it can only be parsed by calling new PropertyTypes();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -1296,7 +1298,8 @@ export class PropertyTypes {
     const offset = this.view.getUint32(42);
     const len = this.view.getUint32(46) - offset;
     const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
-    return JSON.parse(new TextDecoder().decode(dataBuffer));
+    const decoded = new TextDecoder().decode(dataBuffer);
+    return decoded ? JSON.parse(decoded) : undefined;
   }
 
   /**
@@ -1432,6 +1435,69 @@ export class PropertyTypes {
 }
 
 /**
+ * Just a JSON Object
+ */
+export class TestJSON {
+  /**
+   * Creates a TestJSON instance to access the different properties.
+   * @param {ArrayBuffer|DataView|TypedArray} data The data array created by calling
+   *   TestJSON.pack(..., includeType=false);
+   */
+  constructor(data) {
+    this.view = convertToDataView(data);
+  }
+
+  /**
+   * Returns the type id of this struct.
+   * Can be used for example in switch statements together with TYPES.
+   * @returns {number}
+   */
+  typeId() {
+    return 7;
+  }
+
+  /**
+   * Creates an ArrayBuffer including all the values
+   * @param {Object|Array|string|number|boolean} propData
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
+   *   TestStruct(), if false, it can only be parsed by calling new TestJSON();
+   *   Default: false
+   * @returns {ArrayBuffer}
+   */
+  static pack(
+    propData,
+    includeType,
+  ) {
+    const typeOffset = includeType ? 1 : 0;
+    let len = typeOffset + 4;
+    let pointerOffset = 4;
+    const uint8ArrayData = new TextEncoder().encode(JSON.stringify(propData));
+    len += uint8ArrayData.length;
+    const buffer = new ArrayBuffer(len);
+    const view = new DataView(buffer, typeOffset);
+    const uint8Array = new Uint8Array(buffer);
+    if (includeType) {
+      uint8Array[0] = 7;
+    }
+    uint8Array.set(uint8ArrayData, pointerOffset + typeOffset);
+    pointerOffset += uint8ArrayData.byteLength;
+    view.setUint32(0, pointerOffset);
+    return buffer;
+  }
+
+  /**
+   * @returns {Object|Array|string|number|boolean}
+   */
+  getData() {
+    const offset = 4;
+    const len = this.view.getUint32(0) - offset;
+    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
+    const decoded = new TextDecoder().decode(dataBuffer);
+    return decoded ? JSON.parse(decoded) : undefined;
+  }
+}
+
+/**
  * A map between struct names and their type id.
  * Can for example be used for high performance code in switches.
  * @type {{number}}
@@ -1444,12 +1510,13 @@ export const TYPE_ID = {
   Align: 4,
   UnalignedParent: 5,
   PropertyTypes: 6,
+  TestJSON: 7,
 };
 
 /**
  * Converts an ArrayBuffer into one of the TestStruct structs.
  * @param {ArrayBuffer|DataView|TypedArray} data
- * @returns {Simple|Optional|Parent|Mixed|Align|UnalignedParent|PropertyTypes}
+ * @returns {Simple|Optional|Parent|Mixed|Align|UnalignedParent|PropertyTypes|TestJSON}
  */
 export function TestStruct(data) {
   const view = convertToDataView(data);
@@ -1469,6 +1536,8 @@ export function TestStruct(data) {
       return new UnalignedParent(dataView);
     case TYPE_ID.PropertyTypes:
       return new PropertyTypes(dataView);
+    case TYPE_ID.TestJSON:
+      return new TestJSON(dataView);
     default:
       throw Error('Unknown struct TYPE_ID');
   }

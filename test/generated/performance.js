@@ -49,7 +49,7 @@ export class NormalStruct {
    * @param {number} propTestNumber
    * @param {number} propOtherNumber
    * @param {Uint8Array|undefined} propArrayData
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   PerformanceTest(), if false, it can only be parsed by calling new NormalStruct();
    *   Default: false
    * @returns {ArrayBuffer}

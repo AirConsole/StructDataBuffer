@@ -50,7 +50,7 @@ export class Player {
    * Creates an ArrayBuffer including all the values
    * @param {string} propName The name of the player
    * @param {number|undefined} propAge The age of the player (optional)
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   MyGameObjects(), if false, it can only be parsed by calling new Player();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -138,7 +138,7 @@ export class House {
    * Creates an ArrayBuffer including all the values
    * @param {ArrayBuffer} propOwner Who owns the house
    * @param {Object|Array|string|number|boolean} propAddress A JSON representing the address
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   MyGameObjects(), if false, it can only be parsed by calling new House();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -189,7 +189,8 @@ export class House {
     const offset = this.view.getUint32(0);
     const len = this.view.getUint32(4) - offset;
     const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
-    return JSON.parse(new TextDecoder().decode(dataBuffer));
+    const decoded = new TextDecoder().decode(dataBuffer);
+    return decoded ? JSON.parse(decoded) : undefined;
   }
 }
 

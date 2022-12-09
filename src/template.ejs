@@ -55,7 +55,7 @@ export class <%= structName %> {
   const prop = struct.properties[p];
   %>
    * @param {<%= propertyTypes[prop.type].isArrayBuffer ? 'ArrayBuffer' : propertyTypes[prop.type].doc %><%= prop.optional ? '|undefined':''%>} prop<%= prop.name %><%= prop.doc %><% } %>
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   <%= name %>(), if false, it can only be parsed by calling new <%= structName %>();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -134,7 +134,8 @@ export class <%= structName %> {
 <%=indent%>    const len = <%= 'this.view.getUint32(' + prop.offset + ')' %> - offset;<% } %><% if (prop.type === 'JSON' || prop.type === 'string') { %>
 <%=indent%>    const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);<% if (prop.type === 'string') { %>
 <%=indent%>    return new TextDecoder().decode(dataBuffer);<% } else { %>
-<%=indent%>    return JSON.parse(new TextDecoder().decode(dataBuffer));<% }} else if (prop.typeAlign === undefined && prop.padAlign === undefined && !propertyTypes[prop.type].isArrayBuffer) { %>
+<%=indent%>    const decoded = new TextDecoder().decode(dataBuffer);
+<%=indent%>    return decoded ? JSON.parse(decoded) : undefined;<% }} else if (prop.typeAlign === undefined && prop.padAlign === undefined && !propertyTypes[prop.type].isArrayBuffer) { %>
 <%=indent%>    return new <%= prop.type %>(this.view.buffer, offset + this.view.byteOffset, len);<% } else { %><% if (!prop.padAlign) { %>
 <%=indent%>    const start = offset + this.view.byteOffset;<% } else { %>
 <%=indent%>    const end = <%= 'this.view.getUint32(' + prop.offset + ')' %>;

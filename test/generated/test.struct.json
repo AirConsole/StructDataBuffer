@@ -268,6 +268,16 @@
           "type": "Float64Array"
         }
       ]
+    },
+    {
+      "name": "TestJSON",
+      "doc": "Just a JSON Object",
+      "properties": [
+        {
+          "name": "Data",
+          "type": "JSON"
+        }
+      ]
     }
   ]
 }

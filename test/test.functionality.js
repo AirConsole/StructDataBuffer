@@ -6,7 +6,7 @@ import {
   Parent,
   PropertyTypes,
   Simple,
-  TYPE_ID, Optional, Align, UnalignedParent,
+  TYPE_ID, Optional, Align, UnalignedParent, TestJSON,
 } from './generated/test.js';
 
 describe('Test functionality of generated files', () => {
@@ -250,6 +250,13 @@ describe('Test functionality of generated files', () => {
       const parent = TestStruct(arr);
       const child = parent.getChild();
       arrEq(child.getAligned(), [1, 2, 3]);
+    });
+  });
+  describe('JSON', () => {
+    it('Undefined JSON should be fine', () => {
+      const arr = TestJSON.pack(undefined, true);
+      const test = TestStruct(arr);
+      assert.equal(test.getData(), undefined);
     });
   });
 });

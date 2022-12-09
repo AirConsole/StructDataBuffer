@@ -49,7 +49,7 @@ export class Mansion {
   /**
    * Creates an ArrayBuffer including all the values
    * @param {DataView} propPlayer A player from another input file
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   OtherGameObjects(), if false, it can only be parsed by calling new Mansion();
    *   Default: false
    * @returns {ArrayBuffer}

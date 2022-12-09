@@ -47,7 +47,7 @@ export class Test {
    * Creates an ArrayBuffer including all the values
    * @param {number} propPlace
    * @param {Object|Array|string|number|boolean} propTime
-   * @param {boolean} [includeType] If true, the returned ArrayBuffer can only be parsed by
+   * @param {boolean} includeType If true, the returned ArrayBuffer can only be parsed by
    *   NoDoc(), if false, it can only be parsed by calling new Test();
    *   Default: false
    * @returns {ArrayBuffer}
@@ -89,7 +89,8 @@ export class Test {
     const offset = 6;
     const len = this.view.getUint32(2) - offset;
     const dataBuffer = new Uint8Array(this.view.buffer, offset + this.view.byteOffset, len);
-    return JSON.parse(new TextDecoder().decode(dataBuffer));
+    const decoded = new TextDecoder().decode(dataBuffer);
+    return decoded ? JSON.parse(decoded) : undefined;
   }
 }
 
